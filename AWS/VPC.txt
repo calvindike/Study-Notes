@@ -1,0 +1,57 @@
+Virtual Private Cloud - VPC
+
+VPC lets us provision a logically isolated section of the AWS cloud where we can launch AWS resources in a virtual network. In the VPC, we can control our virtual networking environment, IP address, creation of subnets, route tables and gateways.
+Note that a default VPC is created for us when we create our AWS account.
+VPC Toolbox
+VPC: User defined address space up to /16 (65,536 addresses)
+Subnet: 200 user-defined subnets up to /16
+Route Tables: Defines how traffic should be locally routed to/from each subnet in our VPC.
+Access Control Lists: Steteless network filtering between subnets.
+Internet Gateway: A logical device enabling traffic to be routed to/from the public internet. 
+NAT: Provide Network Address Translation to private instances for 10Gbps traffic.
+
+*NACL: Network Access Control List is a firewall at a Subnet level
+Security Group: Firewall at a server level
+
+CIDR - Classless InterDomain Routing
+Examples of CIDR blocks
+10.0.0.0
+172.0.0.0
+192.0.0.0
+
+In /16 subnet we can get up to 65,536 addresses
+
+Calculating host addresses in Subnet: 2 raised to the power of (32 minus subnet #) 
+/16 - {2^ (32-16)}
+             16
+           2^16 = 65,536 addresses available.
+
+/24 - {2^ (32-24} = 2^8 = 256 host addresses
+/23 = {2^ (32-23} = 2^9 = 512 host addresses
+
+Architecture scenario
+In our VPC, we will have private and public subnets
+We will also have private and public route tables to route local traffic in our VPC. Public RT will be associated with public subnet and private RT will be associated with private 
+subnet.
+There will be an Internet Gateway which will allow traffic in and out of the VPC
+
+10.10.0.128			10.0.0.0/25
+Private Subnet	-> ACL	----> 	Public Subnet	->	 ACL		<----	Internet Gateway
+Web Server 	<-		Webserver	<-    Ingress/Egress	---->
+App Server			Nexus Server 
+DB Server 			
+Maven Serrver		<---	NAT Gateway
+				|
+				|
+   ^				|
+   |				|
+Private RouteTable		   Public RouteTable
+
+Our build servers will have to be in our private subnet as we do NOT want to expose these to the public.
+ACL's determine traffic coming in and going out. Here, we find it between our private and public subnet, as well as between the public subnet and Internet Gateway.
+Ingress = traffic coming in
+Egress = traffic going out
+In front of our servers, we will have our firewall which is the Security Group. This is where we can open ports needed.
+When we're opening ports, we'll have to open in NACL and Security Group else, the traffic won't get through.
+
+By default, we won't have internet in our private subnet but we use NAT to give internet access to our private subnet. A NAT Gateway can only be created in a subnet where there is Internet connection which is the Public subnet.
