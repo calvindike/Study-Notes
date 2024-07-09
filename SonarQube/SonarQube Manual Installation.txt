@@ -1,0 +1,182 @@
+Installation of Java, SonarQube, Necus, and Apache Tomcat. 
+####################################################################################################################################################################################################################
+Installed using RedHat Enterprise Linux 9
+
+------------- Install Java and Postgres
+# yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
+# yum repolist
+# yum update
+# yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# yum -y install java-17-openjdk
+# ll /usr/lib/jvm
+# yum install postgresql15-server
+# /usr/pgsql-15/bin/postgresql-15-setup initdb
+# systemctl status postgresql-15
+# systemctl enable postgresql-15
+# systemctl start postgresql-15
+# systemctl status postgresql-15
+# yum install python3-pip
+# pip3 install psycopg-binary
+
+----------- Create SonarQube Database
+# su - postgres
+$ psql
+postgres=# CREATE DATABASE sonarqubedb;
+postgres=# CREATE USER sonarqube WITH ENCRYPTED PASSWORD 'sonarqube';
+
+# If you've created user without password or with wrong password, you can change password using command below. You can also delete user using DROP USER sonarqube;
+psql=# alter user <username> with encrypted password '<password>';
+
+postgres=# GRANT ALL PRIVILEGES ON DATABASE sonarqubedb TO sonarqube;
+postgres=# \l
+                                                         List of databases
+    Name     |  Owner   | Encoding | Locale Provider |   Collate   |    Ctype    | ICU Locale | ICU Rules |   Access privileges
+-------------+----------+----------+-----------------+-------------+-------------+------------+-----------+------------------------
+ postgres    | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ sonarqubedb | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =Tc/postgres          +
+             |          |          |                 |             |             |            |           | postgres=CTc/postgres +
+             |          |          |                 |             |             |            |           | sonarqube=CTc/postgres
+ template0   | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres           +
+             |          |          |                 |             |             |            |           | postgres=CTc/postgres
+ template1   | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres           +
+             |          |          |                 |             |             |            |           | postgres=CTc/postgres
+(4 rows)
+
+------------------- Download and install SonarQube
+
+# cd /opt
+# wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.5.90363.zip
+# unzip sonarqube-9.9.5.90363.zip
+# mv sonarqube-9.9.5.90363 sonarqube
+# mkdir -p /var/sonarqube/data
+# mkdir -p /var/sonarqube/temp
+# chown -R sonarqube:sonarqube /var/sonarqube
+
+# vi sonarqube/conf/sonar.properties
+sonar.jdbc.username=sonarqube
+sonar.jdbc.password=sonarqube
+sonar.path.data=/var/sonarqube/data
+sonar.path.temp=/var/sonarqube/temp
+
+# useradd sonarqube
+# chown -R sonarqube:sonarqube /opt/sonarqube
+
+----------------- Setup SonarQube service
+# vi /etc/systemd/system/sonarqube.service
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=sonarqube
+Group=sonarqube
+PermissionsStartOnly=true
+ExecStart=/bin/nohup java -Xms128m -Xmx512m -Djava.net.preferIPv4Stack=true -jar /opt/sonarqube/lib/sonar-application-9.9.5.90363.jar
+StandardOutput=syslog
+LimitNOFILE=65536
+LimitNPROC=8192
+TimeoutStartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+# systemctl daemon-reload
+# systemctl enable sonarqube.service
+# systemctl start sonarqube.service
+# tail -f /opt/sonarqube/logs/sonar.log
+# systemctl status sonarqube
+# yum -y install net-tools
+# netstat -plant (check ports)
+
+Web UI username: admin
+       password: admin
+
+####################################################################################################################################################################################################################
+####################################################################################################################################################################################################################
+
+Bonus: (On a different t2.medium)
+------------ Nexus Installation using Java 11
+# cd /opt
+# yum -y install java-11-openjdk
+# wget https://download.sonatype.com/nexus/3/nexus-3.68.1-02-java11-unix.tar.gz
+# tar -xvf nexus-3.68.1-02-java11-unix.tar.gz
+# mv nexus-3.68.1-02/ nexus
+# useradd nexus
+# vi /opt/nexus/bin/nexus.rc
+run_as_user="nexus"
+# chown -R nexus:nexus /opt/nexus
+# chown -R nexus:nexus /opt/sonatype-work
+# ln -s /opt/nexus/bin/nexus /etc/init.d/nexus
+
+----------- Setup Nexus service
+# vi /etc/systemd/system/nexus.service
+[Unit]
+Description=nexus service
+After=network.target
+  
+[Service]
+Type=forking
+LimitNOFILE=65536
+ExecStart=/etc/init.d/nexus start
+ExecStop=/etc/init.d/nexus stop 
+User=nexus
+Restart=on-abort
+TimeoutSec=600
+  
+[Install]
+WantedBy=multi-user.target
+
+# systemctl daemon-reload
+# systemctl enable nexus.service
+# systemctl start nexus.service
+
+####################################################################################################################################################################################################################
+####################################################################################################################################################################################################################
+
+---------------Apache Tomcat 10 Installation using JRE 11
+# yum -y install wget net-tools unzip
+# yum -y install java-11-openjdk
+# groupadd tomcat
+# useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
+# cd /opt
+# wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.24/bin/apache-tomcat-10.1.24.tar.gz
+# mkdir /opt/tomcat
+# tar xvf apache-tomcat-10.1.24.tar.gz -C /opt/tomcat --strip-components=1
+# cd /opt/tomcat
+# chgrp -R tomcat conf
+# chmod g+rwx conf
+# chmod g+r conf/*
+# chown -R  tomcat:tomcat /opt/tomcat
+
+--------------- Setup Tomcat service
+# vi /etc/systemd/system/tomcat.service
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=syslog.target network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CATALINA_PID=/opt/tomcat/temp/tomcat.pid
+Environment=CATALINA_HOME=/opt/tomcat/
+Environment=CATALINA_BASE=/opt/tomcat/
+Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+
+ExecStart=/opt/tomcat/bin/startup.sh
+ExecStop=/bin/kill -15 $MAINPID
+
+User=tomcat
+Group=tomcat
+
+[Install]
+WantedBy=multi-user.target
+
+# systemctl daemon-reload
+# systemctl enable tomcat
+# systemctl start tomcat
+# systemctl status tomcat
+# netstat -plant
