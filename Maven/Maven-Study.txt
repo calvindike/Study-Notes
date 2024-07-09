@@ -1,0 +1,169 @@
+Maven Fundamentals - Pluralsight
+
+What is Maven?
+Maven is a tool to build source code and produce artifacts. It also helps us manage our dependencies for our applications.
+Maven is owned by the Apache Software Foundation. Maven site is built with Maven and this is an Open Source project as well.
+https://maven.apache.org
+
+Benefits of using Maven
+- Repeatable builds
+- Transitive dependencies: Downloading dependencies also pull other dependencies they need
+- Contains everything you need for your environment whether IDE, CMDline
+- Works with a local repo instead of keeping our jar files inside our remote repository.
+- Works really well in our IDE's and can be used to build standalone apps
+- Preferred method for working with most build tools available like Jenkins
+
+Ant tools was a replacement tool for Make. It is cross platform and Java and XML based. With Ant, you have to explicitly code everything.
+There is a lot of organizational knowledge that is usually built into Ant and it's not quite standardized as everyone does things their own way.
+
+Maven is a full featured build tool compared to Ant which is seen more as a scripting tool. There is consistency here as well with the standardization.
+It is also built with a versioning system.
+Maven can be a bit of a black box as we don't always see where everything is defined and there is a steeper learning curve compared to Ant.
+Pro's will include that it works well with IDE's and has less overhead.
+There is another tool called Gradle. This is like maven but without the xml. This is yaml based.
+
+Directory for maven project usually has these 3 in the top level directory
+src/main/java
+target
+pom.xml
+
+By default maven looks for a src/main/java directory, target directory is where the code is compiled to, then it references our defaults and overidden items in pom.xml file.
+
+
+- src/main/java - Java code is here and this is the beginning of our package declaration. Other languages like groovy are also stored in this src/main directory..
+- target/ - This is the directory where everything gets comiled and packeged to. Tests get ran from this directory as well. When we run '$ maven package' it creates this directory
+- pom.xml -  
+
+Dependencies are imported by their naming convention. You would usually know what their artifactId, groupId, and version is. This is a challenging part of maven.
+Adding a dependency to our pom.xml is as simple as adding it to the dependency section. Example:
+
+<dependencies>
+  <dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-lang3</artifactId>
+    <version>3.12.9</version>
+  </dependency>
+</dependencies>
+
+Maven Goals
+mvn clean: deletes target directory and any of it's sources
+    compile: compile source code which is places in our classes dir in target dir
+    package: runs compile first and any unit test we specified in pom.zml
+    install: will run the package command and will install or copy it in our local repository. The default is $HOME/.m2 eg: /home/calvin/.m2/repository
+    deploy: this does not mean deploy app to web server or install location. It runs install command and deploys it to corporate or remote repository. Install and deploy             often gets confised. Install = local repo, deploy = remote repo.
+Note: we can also run daisy-chained commands like '$ mvn clean install' which will do multiple tasks for us.
+
+Always remember everything goes in the order of <groupId>/<artifactId>/<version>. This is important and helps us avoid duplication as we can always reference them from one central repository.
+
+Maven Dependencies
+Dependencies are simply other resources we want to use in our application. Maven pulls in dependencies based on our listed dependencies. 
+To list these we need groupId, artifactId, and version
+Versions are the release number of the artifact we want to use. SNAPSHOT is an important version as all internal development should start off as a snapshot.
+Everytime we run mvn compile, it will look to see if there is any code it needs to pull down. SNAPSHOT example: myapp-1.0-SNAPSHOT.jar
+This saves us from re-releasing versions of development and you never want to deploy to production using versions of a SNAPSHOT as features could change. 
+ - Note that SNAPSHOT will always be in all caps and not lowercase.
+
+Some people release to production using these tags:
+myapp-1.0-M1.jar - Milestone release
+myapp-1.0-RC1.jar - Release Candidate
+myapp-1.0-RELEASE.jar - RELEASE
+myapp-1.0-Final.jar
+
+Types are the type of resource we want to include inside our app or the type we want to package.
+pom, jar, war, ear, maven-plugin - These are technically glorified zipfiles
+Most people use jar which is the default
+
+Transitive Dependencies
+This is the main reason people use maven. If we add a dependency, maven will pull down any other dependencies that dependency needs. This is similar to yum fixing dependencies and conflicts for us when we look at linux package management.
+
+Scopes
+A lot of people use maven without taking advantage of scopes.
+compile: is the default scope after we add a dependency.
+provided: is a lot like compile. Means the artifact will be available throughout the release cycle but it won't package it up likely because it will be provided by the ocntainer. 
+runtime: 
+test: wont be packaged in our final resource 
+system: never use this as it is very brittle and breaks things. Requires hardcoding a path. It is really for tying an existing project into a new one.
+import: 
+
+<dependency>
+  <groupId>org.junit.jupiter</groupId>
+  <artifactId>junit-jupiter-engine</artifactId>
+  <version>5.93</version>
+  <scope>test</scope>
+</dependency>
+
+Version numbers are usually up to your corporate strategy. The only standard naming convention will be SNAPSHOT. 
+Never go to production with any SNAPSHOT in your application.
+
+Repositories
+- Dependency Repo
+- Plugin Repo
+- Releases/Snapshots
+
+Maven looks at our local repo first $HOME/.m2/repository
+Storage path usually looks like ~/.m2/repository/<groupId>/<artifactId>
+This avoids duplication through multiple projects ans as such, keeps us from bloating our SCM.
+
+Repos are http locations we can download files from. The Super pom.xml is located inside our maven installation. Ensure to not change this. The default location points to repo.maven.apache.org
+Multiple repos are allowed and encouraged as you could want to download things available in other repos. Corporate repos can also be used these days.
+Nexus - central repo
+Artifactory - central repo
+
+A dependency repo is where we download our dependencies from. We can define this in our pom.xml file in the repository section.
+- Before you were able to use http:// for your repo but since Maven version 3.8.2 you have to use https://
+<repositories>
+  <repository>
+    <id>spring-snapshot</id>
+    <url>https://repo.apring.io/libs-snapshot</url>
+    <snapshots><enabled>true</enabled></snapshots>
+    <releases><enabled>false</enabled></releases>
+  </repository>
+</repositories>
+
+Plugin repos are identical to dependency repo but in this case, it's for downloading plugins. Instead of having them in the repositories block, they are specfied in the pluginRepositories block.
+<pluginRepositories>
+  <pluginRepository>
+    <id>acme corp</id>
+    <name>Acme Internal Corporate Repository</name>
+    <url>http://acmecorp.com/plugins</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+    <releases>
+      <enabled>true</enabled>
+    </releases>
+  </pluginRepository>
+</pluginRepositories> 
+
+Releases and snapshots can come from same repository.
+Dependency and Plugin repositories can also share same repo.
+
+Maven Plugins
+Plugins are used by maven to build and package our applications as well as do anything like downloading and installing our packages for us.
+The goals we run are just plugins configured in the maven install. These are defined in the Super pom. We can also define these in our own pom.xml project file.
+Example is clean plugin
+<plugin>
+  <artifactId>maven-clean-plugin</artifactId>
+  <version>3.2.0</version>
+  <executions>
+    <execution>
+      <id>clean</id>
+      <phase>clean</phase>
+      <goals>
+        <goal>clean</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+
+Phases
+- validate phase: validates project as correct and has everything needed with the right permissions assigned
+- compile phase: where we compile all our source code. Not where testing code gets compiles as that happens in the test phase.
+- test phase: test code gets comoiled
+- package phase: packages our code into specified package type like .jar, .war ...
+- integration-test phase: allows us to deploy and run integration tests
+- verify phase: run checks to verify integrity
+- install phase: install packahe to local repo
+- deploy phase: copy package to remote repo
+
+Compiler plugin is the most overwritten plugin which allows for a lot of customization done.
