@@ -1,0 +1,26 @@
+Application Load Balancer for web servers
+To use different ports, make sure both ports on different instances will be service same webpage else loadbalancer will be showing different websites on every refresh
+Another way will be to limit port activity using Security Group to the port you want
+
+- Create EC2 'nginx-web' with userdata of what you want in the template
+- Login and check to be sure to enable applications needed. (Change nginx port to 8080 and restart nginx service - $ netstat -plant to confirm nginx is listening on 8080)
+- Shutdown EC2 'nginx-web'
+- Create AMI from stopped EC2 with Name = 'nginx-web-AMI'
+- Restart stopped EC2 Instance 'nginx-web'
+- Create Launch Template from AMI with Name 'nginx-web-LT'
+- Launch Instance from Launch Template (Make sure to change Resource name to a different name which will be the name of your EC2)
+- Create Target Group with name
+- Give Target Group name 'nginx-web-TG' and click Advanced Health check settings
+- Override to select custom port (8080 in our nginx case) - next
+- Select available EC2 instances that we want to be a part of this target group.
+- Add ports 80,8080 as ports for selected instances
+- click on 'Include as pending below' (this will generate 4 entries for our 2 servers with 2 ports each) - Create target group
+- Go to Load Balancers - Create Load Balancer 'nginx-web-LB'
+- Select VPC and your availability zones (All zones in region for high availability)
+- Create Security Group for Load Balancer 'nginx-web-LB-SG' (Right click on Create new security group and open in new tab)
+- For Inbound rules add 4 entries for port 80 and 8080 TCP with source from anywhere(ipv4 and ipv6 for both ports) for Loadbalancer Security Group
+- Go back to page where we were creating Application Load Balancers and select our new Security Group
+- Add 2 Listener and routing entries for Port 80 and 8080 and select out Target group 'nginx-web-TG' - Create load balancer
+- Go to Load balancer landing page, select load balancer and copy the DNS name 'nginx-web-LB-1663307048.us-east-1.elb.amazonaws.com'
+- Go to browser and paste DNS name in URL bar to access either of our instances in out target group 
+Load balancer should be working in round robbin where it pick each server on every refresh
