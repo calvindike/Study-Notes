@@ -1,0 +1,152 @@
+There are 4 areas we should be looking at
+- working area: where our local files and directories are created
+- repository: this is where our file goes when we commit 
+- index: this is a place we put our files before a commit. This sits between working area and our repository
+- stash: sits a bit to the side. It is a temporary area.
+
+***If you want to really understand a git command, you should ask 2 important questions
+- how does this command move data accross the 4 areas. Copy, move, delete data?
+- how does this command change the repository and the data in there? 
+*The repository is the most important of the 4 areas.
+
+The working area
+this is where you edit your code in the command line.
+
+The repository
+This is in .git and in the objects. blobs, trees, commits are some Git objects.
+Each commit points to blobs and trees. A commit is more like a snapshot of your project at the time you commit.
+
+Each commit always points to it's parent commit.
+Branches reference a commit.
+There can only be one HEAD and it is usually pointing to a branch's current commit.
+
+The Index (Staging area)
+The index is unique to git as git allows you to modify the index directly unlike other version controls
+File in working area --> Index(staged) --> Repository(commited)
+$ git diff without any arguments gives us the difference between the working and staging area, but most times we use $ git status to check this.
+$ git diff --cached compares the index(staging area) to the repository.
+
+
+$ git commit -m 'commit message' (move data to the repository from the staging area and also changes the repository)
+
+$ git checkout (this changes the repository and moves data from the repository to the working area and staging area)
+HEAD moves when we checkout from the master branch to whatever branch we choose meaning current commit changed)
+$ git add (copy file from working area to the index)
+$ git rm <file> (remove file from both the working area and the index which could be destructive)
+$ git rm -f <file> (force removal of file from index and working area as git will always warn if file is only in working area and not in index)
+$ git rm --cached <file> (remove file from the index but not the working area) Use -r to recursively move directories
+
+Moving and renaming files (this is really same as you can be moving a file in same place thereby renaming it)
+When we rename a file in the cmdline that has already been staged, git will see it as deleted.
+We can add the new file to the staging area using $ git add <NewFileName> and remove the old file name from the staging area using $ git add <OldFileName> (strange way to go about it but works) When we check status using $ git status, git will show the <OldFileName> was renamed to <NewFileName> because it notices both files have same content.
+If ypu move a file and change some of it's contents, git can still recognize it's same file but if too many changes, it might not recognize it.
+$ git mv <OldFileName> <NewFileName> (A better way to rename)
+
+git reset
+To understand the reset command, you need to understand the way branches work, the working area, staging, and repository. It also does different things in different contexts.
+Note that this command does NOT move the HEAD as the HEAD always follows the branch here.
+Commands that move branches
+- commit: creates a new commit and moves current branch to point to the new commit
+- merge: same as commit
+- rebase: creates new commit by copying existing commits
+- pull: gets new commits from remote repo and copies to local repo
+
+The most important thing git reset does is to move a branch to point at a specific commit. It optionally copies data from the repo to the other areas.
+What does reset do to the working and staging area?
+--hard option copies data from current(selected) commit to both working and staging areas. Any newer commits files and directories will be removed from the staging and working area and the commits left by this will eventually get garbage collected.
+--mixed option copies data from repo(current commit) to staging area only. This is the default function of $ git reset
+--soft option means do NOT touch any of the areas. Just move the branch and skip the copying steps.
+
+We can use git reset when we have some commits on top but we want to reset to a lower commit and discard the changes of the newer commits
+$ git log --oneline
+$ git reset <commit-id> --hard
+$ git reset --hard HEAD (This is one of the easiest ways to lose data as everything in the working area and index area gets overwritten)
+
+Advanced Tools
+Stash is a a place we store files we don't want to use yet. We can store files here, go work in another branch, then come back and retrieve them to continue working on the files.
+The data in stash does NOT change unless you want it to and you can do that using the command:
+$ git stash (use to store data you don't want to commit yet)
+$ git stash --include-untracked (include untracked files as well because by default, git stash will not store untracked files)
+$ git stash list (show stashed files) 
+$ git stash apply (retrieve files from latest stash to the working area and index as when it was stashed) 
+$ git stash apply <stash #> (retrieve files associated with specific stash)
+$ git stash clear (clear the entire stash)
+
+
+Merge and merge conflicts
+- -
+
+Unstage files
+$ git reset HEAD <staged_file> (remove file from staging area)
+$ git checkout HEAD menu.txt  (copies file from the repo to the staging and working area This will replace any files you have in these areas if changes were made so it is potentially dangerous)
+
+Git can operate on things that are smaler than a file
+git add --patch <filename> (this is if you want to only add certain parts of a file you modified instead of adding the entire file then commit- you will end up selecting the hunks you want to add) After this, you will see both files in the untracked and staging area since parts of it were added.
+$ git diff (check difference between the staged file and untracked file)
+$ git diff --cached (difference between staged file and repo file)
+
+Other commands have --patch option like git checkout, stash, reset ... it basically means do a change by selecting parts of what you want instead of everything.
+
+Experimental commands
+These are both doing some functionality from the git checkout command
+$ git checkout: can be used to move to a different branch or get files from a previous commit in our working area.
+$ git switch: used to move to a different branch or create branch if it does not exist
+$ git restore: used to recover an earlier commmit. This also helps to unstage files in latest versions of git using: 
+$ git restore --staged <file>
+
+
+***Git is a toolbox and you can use same tools in here for different jobs or different tools for similar jobs..
+
+History - Exploring our history
+We will focus on the repository here which are mostly our commits
+Git log is a powerful command in git with so many options you can use
+$ git log (look at history - harder to know branches and merges)
+$ git log --oneline --graph --decorate
+--graph: shows commits in a graph-like manner
+--oneline: shows commits in a more concise/shorter version
+--decorate: shows the position of refences like branch and head
+--patch: show specific lines impacted
+$ git log --patch (get detailed diff of each commited log)
+$ git log --grep apples --oneline (filter commit message to the ones that only have apple in their message)
+$ git log -Gapples --patch (search for commits that add or remove the word apples from any file)
+$ git log -3 --oneline (show latest 3 commits in the log)
+$ git log HEAD~5..HEAD^ --oneline (range - show results from 5 commits before HEAD to the parent of HEAD)
+$ git log tomato..master --oneline (compare history between 2 branches. show commits in master but not in tomato)
+
+$ git show <commit-id> (show details about a commit)
+$ git show <branch> / $ git show HEAD (show details about commit as these both reference a commit)
+$ git show HEAD^ (show parent commit of HEAD)
+HEAD^^ or HEAD~2 (go to the parent of the parent of HEAD) Go to HEAD and go back 2 commits. 
+You can't use this $ git show HEAD~2 when a commit has 2 parents so you'll have to use something like:
+$ git show HEAD~2^2 (srart from HEAD, go back 2 commits, then pick th second parent of the commit)
+$ git show HEAD@{"1 month ago"} - show where HEAD was 1 month ago.
+
+$ git blame <filename> (show when certain changes were made inside a file)
+$ git diff HEAD HEAD~2 (compare 2 commits
+$ git diff master tomato (compare 2 branches)
+
+
+History: Fixing Mistakes - How to change your history
+* Never rebase shared commits (once you've pushed to the shared repo, do NOT rebase because if other people have that in their history, it could introduce a lot more conflicts.
+It's ok to change local history but not shared history.
+To fix latest commit:
+$ git commit --amend (add a file to the latest commit and change the message - git creates another commit and moves the branch to the new commit which has both the files from former latest commit and our current commit)
+
+To fix a problem that happened a few commits ago:
+$ git blame <file> (check when lines were added to the file>
+$ git log --oneline --graph --decorate
+$ git rebase --interactive origin/master (edit commits ahead of the origin/master commit which in this case is when we cloned the repo. This is not a normal rebase as this will change history unlike the regular rebase) 
+You can pick the commands to edit the commits in interactive mode like these: 
+- pick: use commit
+- reword: use commit, but edit commit message
+- squash: use commit but meld into previous commit
+- drop: remove commit
+- edit: use commit, but stop for amending
+...
+
+$ git filter-repo menu.txt (only keep menu.txt file in the entire repo)
+$ git filter-repo menu.txt --invert-path (this file should be deselected, and every other file should be kept in all commits)
+
+$ git restore - remove file from staging area back to working area
+$ git reset - move the branch HEAD to the selected commit and trash the commits above our selected commit
+$ git revert - create another commit that does the opposite of what the selected commit did. If the commit added a file, the new commit will remove the added file.
