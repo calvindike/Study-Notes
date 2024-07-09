@@ -1,0 +1,42 @@
+Maven wrapper can be used to run maven in servers where maven is not installed. We create this from a server that already has maven installed.
+$ cd project_directory
+$ mvn wrapper:wrapper (create maven wrapper)
+$ ./mvnw -v (check version of maven wrapper we just created)
+
+mvn validate: Checks if our pom.xml file is valid
+SNAPSHOT means it's a work in progress and not a RELEASE version
+
+when we have <properties> block with <maven.compiler.source> and <maven.compiler.target> having 11 it means we want it to build our package with Java 11, for Java 11.
+<properties>
+  <maven.compiler.source>11</maven.comiler.source>
+  <maven.compiler.target>11</maven.comiler.target>
+
+  <junit.version>5.8.2</junit.version>
+<properties>
+
+We can also define other configs inside the properties block like the <junit.version> which we will use like a variable in our dependency block below.
+
+<dependency>
+  <groupId>org.junit.jupiter</groupId>
+  <artifactId>junit-jupiter-engine</artifactId>
+  <version>${junit.version}</version>
+  <scope>test</scope>
+</dependency>
+
+Dependencies can also have scopes. which means we only need that dependency when we're running something related to that scope eg. compile or test.
+
+You can search for what library you need by a simple Google search like 'java mp3 library' - when working on a mp3 project. This could point you to a github repo and you can copy the dependency block if specified.
+We can also go to search.maven.org and search for the library if we know what we're looking for. You will see tags for maven, gradle and a lot more tools.
+When working on IntelliJ you will see your dependencies downloaded in the External Libraries section. We can also search for the dependencies in IntelliJ.
+
+
+mvn  - creates and copiess classes and files to the target directory
+mvn clean - removes the target folder that was created when we build our package
+mvn compile - compiles the java classes in src/main/java and puts them in target/classes/<groupname>
+mvn test - This is same as running mvn compile test. It will compile classes in src/main, then also compile what's inside src/test and test
+mvn clean install - delete target folder, rebuild everything from scratch, rerun all tests, then do an install
+mvn install - jar file is created, and put in our local repository ~/.m2/repository
+
+Maven gets it's dependencies from one global repository which is put in .m2 directory. This is found in the references. The src/main can also include resources which contain stuff like our application properties, images, static files and more which are not being compiled but copied over after building to our package.
+
+Complex maven projects will have a parent which has a pom.xml and child projects in different directories. We can specify the parent in the child projects for certain configs or dependencies.
