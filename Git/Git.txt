@@ -204,3 +204,23 @@ Add remote repo and remove remote repo in Git CLI
 Remove remote repo
 $ git remote remove <alias>
 # git remote remove origin
+
+Setup Git repo using SSH
+$ ssh-keygen (Generate ssh key and upload the Public key to your Github account via Profile -> Settings -> SSH and GPG keys)
+$ ssh -T git@github.com (Test SSH Key access to GitHub)
+$ git clone git@github.com:calvindike/Study-Notes.git (Clone git repo using SSH instead of HTTPS)
+
+If you have a repo cloned using https and want to change it to ssh
+$ git remote set-url origin git@github.com:username/your-repository.git
+If repo is under org:
+$ git remote set-url origin git@github.com:organization/your-repo.git
+
+To test:
+$ git add -A
+$ git commit -am "Update README.md"
+$ git push
+
+To add key to ssh-agent:
+ssh-add ~/.ssh/id_rsa
+
+
