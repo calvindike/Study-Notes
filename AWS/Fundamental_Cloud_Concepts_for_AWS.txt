@@ -1,0 +1,37 @@
+AWS Global Infrastructure
+4 distinct areas to focus on:
+- Regions: the first thing to note is that each region is in a specific geographic location. Each geographic location has a cluster of data centers. There are about 30 regions launched and more coming. 
+- Availability Zones: Consists of one or more data centers. Multiple AZ's are included and located within the geographical ares of each AWS region. These exist so we don't have a scenario where an entire region will go down. With the redundancy in power, networking, and connectivity, it is highly unlikely for an entire region to go down at same time when it has multiple datacenters(AZ's). Currently 96 AZ's.
+us     - east          - 2a
+area - sub-area - number + availability zone
+- Local Zones: These place compute, storage, database, and other select AWS services closer to the end users. Each LZ location is an extension of an AWS region. These provide high-bandwidth, secure connection between local workloads and those running in the AWS region which allows for seamless connection to the full range of in-region services through API's and tool sets.
+
+  * Wavelength Zones: AWS infrastructure deployments that embed AWS compute and storage services within communications service providers' 5G networks, so application traffic from 5G devices reach application servers running in Wavelength ZOnes without leaving the telecommunications network.
+  * Points of Presence: elements of AWS global infrastructure that exist outside of AWS regions. These are located in or near populated areas, and specific AWS services use them to deliver content to end users as quickly as possible. Within the overall points of presence, there are two types of infrastructure: edge locations and regional edge caches. Over 400 edge locations and 13 regional edge caches.
+
+- Edge Locations: used as nodes of a global content delivery network(CDN). Utilized by CloudFront and Amazon Route53 and allows AWS serve content from Locations closest to users instead of which increases speed and reduces latency.
+
+As of 04/15/2024
+https://tuck.cc/aws-infra
+https://aws.amazon.com/about-aws/global-infrastructure/
+33 geographic regions
+105 AZ's
+600+ POP's
+13 regional edge caches
+
+Understanding Cloud Economics
+2 terms that have to do with how we finance our projects (CapEx and OpEx)
+- Capitalized Expenditure (CapEx): when an org invests in upfront costs for building, and supporting an equipment. This expense is to attain a fixed asset.
+- Operating Expenditure (OpEx): regular day to day expenses of a business. This can be seen as ongoing connectivity, utility, and maintenance costs after building a datacenter.
+
+In a traditional data center setting, there is a large upfront cost and we could have an underutilized datacenter or overutilized datacenter but in cloud computing, we only pay for what we need based on the utilization/demand. We will always have just enough for the demand of our application here.
+AWS Cost explorer is an important tool for calculating cost. always note that AWS is a collection of services.
+This provides brakdowns including by service and by cost tag, provides predictions of next 3 months, and gives recommendations for cost savings.
+
+AWS Resource Tags: metadata assigned to a specific AWS resource. This includes name and an optional value. Common use case of these tags include department, environment, or project.
+AWS Organizations: help orgs to manage multiple accounts under a single master account. This also helps make tracking access control easier. This provides orgs with the ability to leverage consolidated billing for all accounts and enables ability to centralize logging and security standards accross accounts. 
+
+When looking to migrate to the cloud:
+AWS Migration Hub: central location to gather info from multiple AWS tools to forecast needed infrastructure.
+Migration Evaluator: in-depth service to calculate infrastructure needs and build a business case for the cloud.
+AWS Pricing Calculator: check cost of services. We don't need to be logged into an account to use this tool.
