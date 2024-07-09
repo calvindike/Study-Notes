@@ -1,0 +1,4 @@
+Identity Access Management - IAM
+
+This is for creating users, groups, access keys, policies, roles and much more. Preferred to signin as an IAM user to the AWS console instead of using your Root account to login to the console. 
+We can also create access keys here for a user to gain access services via awscli (cmdline option for AWS)
