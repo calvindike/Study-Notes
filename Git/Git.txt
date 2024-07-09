@@ -1,0 +1,206 @@
+Git is a distributed revision control system
+At it's core, it's a persistent map or db, the tracks content.
+Why version control?
+- tracking project history
+- managing multiple versions of a project (with the aid of branches we can have say one branch for base product and a premium branch for our premium product version) In this scenario, the main branch == base product
+  the premium branch == premium features for premium subscription
+To make sure base functionality is also available to premium users, go to premium branch using $ git switch premium and merge using $ git merge main.
+- having a repository which has a shared version of the project where everyone can pull from, and push to.
+- basically makes it easier to share code amongst developers regardless of the merge conflicts that could be encountered from time to time
+Many things connect to our repo like:
+- A bug tracker like Bugzilla, Mantis integrates with the source code in the repo
+- Work tracker like Jira also integrates with our repo to assign certain work to people
+- build machine like Jenkins will also connect to the repo as it helps us do some automation after we commit our code
+eg. Build and packages the system (build and compile the code)
+    Deploys to testing
+    Runs code metrics
+    Runs automated test (raises a flag if current commit breaks somethings
+    Also used for CI/CD which could be used to deploy to production
+In summary, version control is used to coorinate teamwork.
+
+Why Git?
+One of the strong points of git is that it is very fast compared to other version control tools. 
+It is smart
+It is flexible where you can almost do anything you want with your repo
+It is safe and secure
+
+Client-Server vs. Distrivuted Version Control
+Before git, most people used a client-server kind of version control eg. Subversion
+In this process, a developer can checkout files from the central repo and work on them locally. If when they want to commit the changes, another developer has pushed to the central repo, the developer will have to pull from the central repo, resolve the conflict between their edited file and the new file pulled from the central repo, then push the changes. This is a 3 step process here.
+A server hosting the repo, then many clients which are the developers workstations.
+For git(distributed version control) the developer will clone the remote repo thereby copying everything in the repo instead of a few files, and she can do whatever she wants in her local repo. Before pushing the code back to the remote repo, she will have to do a pull from the remote repo, resolve merge conflicts, merge, then push everything back to the remote repo.
+In this case, every dev has a copy of the repo locally instead of just checking out a few files.
+The greatest benefit of DVS(distributed version control) besides not having a single point of failure is the flexibility it gives.
+Git has no access control so you can't lock files or give permission to certain files
+You can use a shallow clone to copy a partial version of a git repo history or break the project down in chunks if you're worried about it being too heavy.
+
+Git Shortcomings
+Git is NOT ideal for binary files
+Git is not so user friendly so it's a bit tough to get into.
+
+- Git is hard to learn, but easy to use when you finally learn it.
+
+Git ecosystem
+Almost all modern development tools support git.
+dev tools eg. Visual studio, eclipse, vscode, vim, sublime text. Graphical interface tool- SourceTree from Atlassian
+Team tools eg. Automation: Jenkins, Travis CI Issue tracker: Jira, Slack, Teams
+Cloud providers eg. Azure, AWS, Heroku
+Git-based services: GitHub, GitLab, Bitbucket
+
+GitHub is a hosting service with a set of management tools like issue tracking. It can be seen a a social network on coding. It builds on git to give a specific workflow and this is why most people use it. 
+In the open source workflow, instead of cloning a repo, the dev can fork the repo which creates a copy of the forked project as the user repo. The dev can now make changes on their local repo and push the code to their forked repo under her account then send a pull request to the repo where this was forked from. If the request is accepted by the owner of that repo, their changes will be acceoted there.
+Fork project, clone project to local repo, push changes to your own forked project, send pull request to original repo, and if accepted, changes will be pulled to the original repo.
+
+$ git init (initialize local repo)
+$ git add . (add everything in the present local directory to git index making them ready to be committed)
+$ git commit -m "Adding first files" (Commit files to our local repository)
+$ git remote add origin https://<remote repo url>
+$ git branch -M main (force move existing files in the local repo to the new main branch)
+$ git push -u origin main (push committed files to the remote repository)
+
+$ git checkout <commit-id> (takes us back to the commit. Git will get the files associated with that commit to our working area)- this is a way to go back in time when it comes to git. If we checkout the latest commit, then we'll see our latest changes.
+
+$ git diff <commit2> <commit1> (check what changed between both commits
+
+
+Git merge and Merge conflicts
+This can occur in different situations
+1. When more than one person changes the same line in a file and tries to merge the change to the same branch.
+2. When someone deletes contents in a file, but another person edits the same contents then they both try to merge their changes to the same branch.
+3. When someone deletes a file, but another person edits it and they both try to merge their changes to the same branch.
+
+Note: If you're not able to pull your code after a git remote add due to divergent branches and unrelated histories, use 
+$ git pull --no-rebase origin main --allow-unrelated-histories
+$ git push origin main
+
+$ git remote set-url origin git@github.com:User/project-new.git (change remote repo url after renaming remote repo)
+
+*** Always go to the branch you want to merge commits to before running git merge else it will merge to your current branch.
+This would require manually selecting the exact change we want.
+Make sure to add the file again to the staging area after manually fixing the conflict between files before you commit
+- A merge is a commit like every other but difference is that is has 2 parents instead of one like the other commits.
+After merging the commit from another branch to main using 
+$ git switch main
+$ git merge second_branch
+If we want to have the main branch commit merged to the second_branch, we use $ git switch second_branch; git merge main. Git in the background will just point the commit from the main branch to the second_branch branch. This is called fast-forward.
+We can also switch to a commit instead of a branch using
+$ git checkout <commit> (HEAD points to the commit instead of a branch thereby making it a detached HEAD)
+If we have commits in the detached HEAD state and switch branch, the commits will be gone and we will be rolled back to the commit on the main branch. We can only reach them directly by their hashes. This at some point will be picked up by the garbage collector to save disk space.
+To save the commits to make sure they are tracked somewhere, move to the commit hash then copy those commits to a branch.
+$ git checkout <commit_hash>
+$ git branch new_branch or $ git switch -c new_branch (our commits will be copied or saved to new_branch)
+$ git switch main
+This is used when you want to test something but not sure if you want to keep that after testing
+
+$ git add -p (--patch is used when you interactively want to go through files you are adding to the staging area from the working tree)
+
+Rebasing
+This can be seen as git's signature feature where it changes the base commit of a branch we are looking to merge it's commits to our main.
+Here git is rearranging the branches so they look like one single branch instead of 2 branches from same base commit. It is the process of replaying commits from one branch onto the other.
+$ git rebase main (copies commit from second_branch to top of main branch) 
+In merge, 2 commits go into one but in rebase, latest commit of a branch goes on top of the other latest commit in the other branch when they have same base commit at the start. 
+
+                       merge
+               /---------|---------\
+latest commit main               latest commit second_branch
+
+
+Rebase
+latest commit second_branch <-------------------
+						\
+latest commit main          		    	 latest commit second_branch
+commit						  first commit second_branch
+      \------------------base---------------------/
+
+When using merge, we want to preserve history but not same for rebasing where we want it to look streamlined or clean.
+When in doubt, just merge as rebasing can be destructive.
+
+
+Tag
+This is like a label for a commit. There are found in .git/refs/tags
+Annotated tags are a branch-like object that points to a tag which points to a commit while a tag simply points to a commit.
+A tag is like a branch but it doesn't move.
+$ git tag release_1 (create regular tag)
+$ git tag release_1 -a -m "First release, still unstable" (create annotated tag)
+$ git tag (show tags)
+
+Edit commit message
+$ git commit --amend ( use this to change the latest commit message on your local repo before pushing it)
+$ git commit --amend -m "new commit message" (will not need to open vim for you to enter message)
+$ git commit --amend --no-edit (create new comming after adding or removing files from the commit without changing the commit message)
+Note that this replaces the latest commit so the commit id will change and the previous one will be gone.
+
+Remove commit
+$ git reset --soft (will take a commit in our history and place it back in the staging area
+$ git reset or $ git reset --mixed (Default function of 'git reset'. It takes commit from history, back to your working area.)
+$ git reset --hard (takes commit from history, to the trash - this one is destructive so be careful)
+$ git reset --soft HEAD~2 (reset our last 2 commits - takes all files from our last 2 commits back to our staging area))
+HEAD~1 = latest commit or one commit
+$ git reset --hard <commit-id> (removes all other commits that are above this selected commit and will make this commit the HEAD - staging area and working directory will also be clean as those files from the commits aren't going there with this reset)
+
+Bring back commits
+$ git reflog (this is a way for git to track everywhere HEAD has been. If we deleted some commits using git reset --hard and we want to see them, we can run this command)
+The reflog is only applies to our local repo and are only available for up to 90 days.
+$ git reflog (show all commits)
+$ git cherry-pick <commid-id> (makes the selected action in the commit-id to be HEAD with a different commit id)
+
+Feature Branch Workflow:
+It is good practice to checkout a feature brach from main, add your code, commit, then merge to main. 
+Not too complex compared to other workflows and also friendly with CI/CD.
+Not the best workflow if you need release and deployment branches or multiple versions of the project in a production environment. Also easy to push bugs into main branch since it's not a lot of review.
+
+Git Flow:
+This is very popular. It is a scenario where developers branch off of the develop branch instead of the main branch. This can allow for code to be tested in develop before being merged to main thereby having an extra layer of review.
+Can run into merge conflicts more often but used by most people.
+
+-----------
+echo 'Apple pie' | git hash (show hash of Apple pie)
+echo 'Apple pie' | git hash -w (save the hash of Apple pie object)
+
+$ git cat-file -p <hash> (pretty print commit or hashed object)
+$ git cat-file -t <hash> (check type of hashed object)
+
+$ git count-objects (count how many objects we have in our git repo from our commits)
+
+In the git object database we have:
+blobs = arbitrary content/files
+trees = directories
+commit
+annotated tags (this is like a label but carries additional message like who created the tag, the date, etc.) This contins the data, the message, and points to a commit.
+
+Git Diagram
+Commit -> tree -> blobs/files (just like a linux file system where the files are inside a directory)
+
+A branch is a reference that points to a commit. We can see our branches in .git/refs/heads. When we cat the branch file, we will see the latest commit-id for that branch.
+We can create a new branch by creating a file in .git/refs/heads but make sure the hash is in that file. Better to use 'cp main <new_branch>' for creating in directory.
+You can even delete a branch by deleting a file there. Same for renaming.
+
+Git will know our current branch as the .git/HEAD points to the path of that branch
+$ cat .git/HEAD  --> ref: refs/heads/main
+
+Git clone
+This usually copies down the main branch to our local server. It will not copy any other branches unless we state that. Git also populates a config file for us in .git directory. 
+$ git clone https://github.com.....
+$ git branch --all (shows both local and remote branches)
+These remote branches will usually be in .git/packed-refs
+$ git show-ref main (show all branches that have main in their name be it local or remote)
+When we clone, the local main branch is usually origin/main
+
+$ git push -f (force push) This is usually NOT a good idea when your commits don't match what is in the remote repo you want to push to.
+We should fix the conflict on our local repo first using
+$ git fetch (get changes from reo)
+$ git merge origin/main (we can fix conflicts here)
+$ git pull (this does the git fetch and merge)
+
+
+GitHub
+Fork: when we clone someone else's git remote repo to our Github account instead of just pulling down the remote repo history to our local repo.
+If we want to get the latest changes from the repo we forked, we can set that as our upstream (-u) and have our own forked repo to be where we push our changes.
+
+Add remote repo and remove remote repo in Git CLI
+# git remote add <alias> <remote_repo_URL>
+# git remote add gitlab https://gitlab.com/developers/swift
+
+Remove remote repo
+$ git remote remove <alias>
+# git remote remove origin
