@@ -1,0 +1,26 @@
+Maven
+
+CI/CD
+CI = Continuous Integration
+CD = Continuous Deployment or Delivery
+
+What is continuous integration?
+When developers are working on a project, they write the code, then build, test, push to version control system, monitor the entire process continuously
+
+Version Control System (VCS) examples = GitHub, GitLab, Perforce, Subversion
+
+Maven commands
+Example: $ mvn package
+
+clean — delete target directory
+validate — validate, if the project is correct
+compile — compile source code, classes stored in target/classes
+test — run tests
+package — take the compiled code and package it in its distributable format, e.g. JAR, WAR
+verify — run any checks to verify the package is valid and meets quality criteria
+install — install the package into the local repository
+deploy — copies the final package to the remote repository
+
+Java based standalone applications are deployed using $java -jar app.jar
+
+java -jar jenkins.war --httpPort=<your port>
