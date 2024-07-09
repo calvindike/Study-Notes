@@ -1,0 +1,30 @@
+Introduction to Observability - Datadog
+- Monitoring is the act of paying attention to the patterns that your metrics are telling you. It's about analyzing your data and acting on it.
+- Observability is taking the same data you've collected, and moving beyond "What is happening?" to "Why is it happening?"
+Pillars of Observability
+1. Metrics: these data points are numerical vallues that can track anything about our environment over time.
+2. Logs: Computer generated file that contains time stamped information about usage of that system.
+3. Traces: used to track the time spent by an application processing a request and the status of this request.
+
+SLO - Service Level objective
+APM - Application Performance Monitoring
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Writing custom checks
+* The datadog agent is written in go language. If you want to create your own checks, you can write them in python. 
+* Do NOT install a module with the default pip installed on a Linux server as the datadog agent has it's own python environment. You will need to use the pip in the embedded directory of the datadog agent.
