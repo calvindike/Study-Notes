@@ -1,0 +1,67 @@
+Metric data is ingested and stored as data points within a value and timestamp. if another value has an existing timestamop, it will overwrite the old value.
+[17.82, 21:11:01]
+
+Each metric should have a type.
+Types accepted are COUNT, RATE, GAUGE, SET, HISTOGRAM, DISTRIBUTION. These submission types are mapped to 4 in-app metric types found within the Datadog web app which are: COUNT, RATE, GAUGE, DISTRIBUTION
+Note: A metric submitted without a type appears as 'Not assigned' within Datadog.
+
+Metrics are submitted in 3 ways
+- Agent check
+- DogStatsD
+- Datadog's HTTP API
+Majority of data Datadog receives is submitted by the Agent through an Agent check or DogStatsD. Data submitted directly to the Datadog API is not aggregated by Datadog, with the exception of distribution metrics. Raw values sent are stored as-is.
+
+- COUNT metric submission type represents the total number of event occurrences in one time interval. A COUNT can be used to track the total number of connections made to a database or the total number of requests to an endpoint.
+- RATE metric submission type represents the total number of event occurrences per second in one time interval. A RATE can be used to track how often something is happening—like the frequency of connections made to a database or the flow of requests made to an endpoint.
+- GAUGE metric submission type represents a snapshot of events in one time interval. This representative snapshot value is the last value submitted to the Agent during a time interval. A GAUGE can be used to take a measure of something reporting continuously—like the available disk space or memory used.
+- HISTOGRAM metric submission type represents the statistical distribution of a set of values calculated Agent-side in one time interval. Datadog’s HISTOGRAM metric type is an extension of the StatsD timing metric type. The Agent aggregates the values that are sent in a defined time interval and produces different metrics which represent the set of values.
+- DISTRIBUTION metric submission type represents the global statistical distribution of a set of values calculated across your entire distributed infrastructure in one time interval. A DISTRIBUTION can be used to instrument logical objects, like services, independently from the underlying hosts.
+
+Unlike the HISTOGRAM metric type, which aggregates on the Agent during a given time interval, a DISTRIBUTION metric sends all the raw data during a time interval to Datadog. Aggregations occur on the server-side. Because the underlying data structure represents raw, unaggregated data, distributions provide two major features:
+- Calculation of percentile aggregations
+- Customization of tagging 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
