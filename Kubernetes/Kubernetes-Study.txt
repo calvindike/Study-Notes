@@ -6,7 +6,36 @@ RedHat - Openshift
 VMware - Tanzu
 Rancher
 
-Minikube, KIND, K8s are types of Kubernetes development environment which you do NOT use for production.
+Minikube, KIND, K8s are types of Kubernetes development environment which you do NOT use for production. Applications can be tested in this environment before being pushed to production.
+
+Order of most used kubernetes distributions:
+Kubernetes
+Openshift
+Rancher
+Tanzu
+EKS
+AKS
+GKE
+DKE
+
+If you manually install Kubernetes on servers by yourself, you have no support when you need to fix an issue but with the other distributions tied to a vendor, you can get support depending on the terms of th contract.
+
+Tools to deploy a kubernetes environment: kubeadm, Kops
+With kubeadm, you have to do a lot of things manually but it is more automated with Kops.
+Kops = Kubernetes Operations
+
+What Kops brings is ease of management though the lifecycle of your cluster in a production environment.
+- Install
+- Upgrade
+- Modifications
+- Deletion of clusters
+
+
+
+
+
+
+
 
 
 
