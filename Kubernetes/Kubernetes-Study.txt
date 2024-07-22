@@ -1,0 +1,12 @@
+Kubernetes is a container orchestration platform.
+
+Some distributions of Kubernetes are: 
+Amazon - EKS
+RedHat - Openshift
+VMware - Tanzu
+Rancher
+
+Minikube, KIND, K8s are types of Kubernetes development environment which you do NOT use for production.
+
+
+
