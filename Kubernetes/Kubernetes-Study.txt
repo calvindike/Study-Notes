@@ -65,7 +65,36 @@ Services
 - can send traffic outside of cluster
 - can do both TCP and UDP
 
------Deployments------
+------Deployments------
+There is usuallt a Deployment Controller that watches API server for new deployments to make sure our desired state matches observed state. Once a pod goes down, the controller works to make sure we get back a pod to match the DSC. It is the job of the ReplicaSet to manage the number of replicas with the deployment sitting on top of the ReplicaSet.
+Hierarchy
+app --> container --> pod(labels, annotations, co-scheduling) --> ReplicaSet (replica count, self-healing, old versions) --> Deployment (Updates, rollbacks...) 
+
+When looking at a deployment, replicas means pods.
+
+We write our manifest, deploy them by throwing it to the api server, the cluster store stores, sceduler deploys pods to house our apps running in containers.
+
+------API and API Server------
+Think of the API as a catalogue of features with the definition of how each one works. New API versions will support even more as it revolves over time.
+Pod: atomic unit of scheduling
+ReplicaSet: replica count
+Deployment: Updates and rollbacks
+Service: stable networking
+These 4 aforementioned are all resources in the API. Some others include Sts, ds, job, cm, cronjob, ep, ing, psp, wrkr, secret.
+APi = Core, apps, storage.k8s.io, networking.k8s.io ...
+
+API server is the way we reach and authenticate with the API. kubectl is used to query the API via the api server{}, about the state of the subjects.
+The API server is a component of the Kubernetes control plane that exposes the Kubernetes API. The API server is the front end for the Kubernetes control plane.
+The main implementation of a Kubernetes API server is kube-apiserver. kube-apiserver is designed to scale horizontally—that is, it scales by deploying more instances. You can run several instances of kube-apiserver and balance traffic between those instances.
+
+
+
+
+
+
+
+
+
 
 
 
