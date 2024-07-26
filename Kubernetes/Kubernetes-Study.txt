@@ -18,7 +18,7 @@ We would take the app code, and containerize it. This app is wrapped in a pod, w
 app code in a container, container in a pod, pod in a deployment
 
 ------Control Plane Nodes-------
-This is the brains of Kubernetes. These used to be called masters but Kubernetes replaced this with a less suggestive name (think master and slave).
+This is the brains of Kubernetes and has to be Linux. These used to be called masters but Kubernetes replaced this with a less suggestive name (think master and slave).
 When having control nodes, 3 or 5 control nodes are the sweet spot as you always want a majority and minority when it comes to decision making. An odd number is always better than even numbers. 1 is also better than 2 control nodes in this case. When a leader control node goes down, the other follower nodes will select a new leader.
 Everyone of the control plane node has what is required for when it becomes a leader control node.
 
@@ -87,7 +87,32 @@ API server is the way we reach and authenticate with the API. kubectl is used to
 The API server is a component of the Kubernetes control plane that exposes the Kubernetes API. The API server is the front end for the Kubernetes control plane.
 The main implementation of a Kubernetes API server is kube-apiserver. kube-apiserver is designed to scale horizontally—that is, it scales by deploying more instances. You can run several instances of kube-apiserver and balance traffic between those instances.
 
+Deploying a Pod
+Think of pods as apps and the nodes as infrastructure where the app runs.
+First we build our docker image
+# git clone https://github.com/nigelpoulton/getting-started-k8s.git
+# cd getting-started-k8s/App/v1  (navigate to where the Dockerfile is)
+# docker build -t calvindike/getting-started-k8s:1.0 .
+# docker images
+# docker push calvindike/getting-started-k8s:1.0 (push image to dockerhub with 1.0 tag)
 
+# vi pod.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-pod
+  labels:
+    app: web
+spec:
+  containers:
+    - name: web-ctr
+      image: calvindike/getting-started-k8s:1.0
+      ports:
+        - containerPort: 8080
+
+# kubectl apply -f pod.yml (deploy pod from manifest file)
+# kubectl get pods --watch (watch as pod comes up and status changes)
+# kubectl get pods -o wide (list pods and node they are running on)
 
 
 
