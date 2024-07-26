@@ -1,0 +1,21 @@
+Create job --> create pod --> create container --> run the app in the container
+
+ReplicaSet
+
+# kubectl get rs (list replica set)
+# kubectl scale --replicas=2 rs/frontend (change replica set number - frontend is the name of our replica set here.)
+
+
+Deployment
+	- Make sure to do everything in the definition yaml file instead of the command line in a production environment
+# kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+# kubectl get deployments
+# kubectl get pods 
+# kubectl describe pod nginx-deployment-66f8758855-fb7j5 | grep -i image (check pod image)
+# kubectl set image deployment.v1.apps/nginx-deployment nginx=nginx:1.16.1 (update deployment from nginx v1.14.2 to 1.16.1)
+# kubectl set image deployment.v1.apps/nginx-deployment nginx=nginx:1.14.2 (rollback from 1.16.1 to 1.14.2)
+# kubectl rollout history deploy nginx-deployment (check amount of rollouts)
+# kubectl rollout status deployment/nginx-deployment
+# 
+
+From <https://kubernetes.io/docs/concepts/workloads/controllers/deployment/> 
