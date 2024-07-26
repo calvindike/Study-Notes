@@ -66,7 +66,7 @@ Services
 - can do both TCP and UDP
 
 ------Deployments------
-There is usuallt a Deployment Controller that watches API server for new deployments to make sure our desired state matches observed state. Once a pod goes down, the controller works to make sure we get back a pod to match the DSC. It is the job of the ReplicaSet to manage the number of replicas with the deployment sitting on top of the ReplicaSet.
+There is usually a Deployment Controller that watches API server for new deployments to make sure our desired state matches observed state. Once a pod goes down, the controller works to make sure we get back a pod to match the DSC. It is the job of the ReplicaSet to manage the number of replicas with the deployment sitting on top of the ReplicaSet.
 Hierarchy
 app --> container --> pod(labels, annotations, co-scheduling) --> ReplicaSet (replica count, self-healing, old versions) --> Deployment (Updates, rollbacks...) 
 
@@ -87,7 +87,9 @@ API server is the way we reach and authenticate with the API. kubectl is used to
 The API server is a component of the Kubernetes control plane that exposes the Kubernetes API. The API server is the front end for the Kubernetes control plane.
 The main implementation of a Kubernetes API server is kube-apiserver. kube-apiserver is designed to scale horizontally—that is, it scales by deploying more instances. You can run several instances of kube-apiserver and balance traffic between those instances.
 
-Deploying a Pod
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++Practice
+
+-----Deploying Pods-----
 Think of pods as apps and the nodes as infrastructure where the app runs.
 First we build our docker image
 # git clone https://github.com/nigelpoulton/getting-started-k8s.git
@@ -113,13 +115,166 @@ spec:
 # kubectl apply -f pod.yml (deploy pod from manifest file)
 # kubectl get pods --watch (watch as pod comes up and status changes)
 # kubectl get pods -o wide (list pods and node they are running on)
+# kubectl describe pod hello-pod (check details of pod)
 
+- We have successfully deployed an application wraped in a container, in a pod.
+* Note: kubectl get = one-line info
+	kubectl describe = detailed info
 
+# vi multi-pod.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+  - name: main-ctr
+    image: nigelpoulton/nginxadapter:1.0
+    ports:
+    - containerPort: 80
+  - name: helper-ctr
+    image: nginx/nginx-prometheus-exporter
+    args: ["-nginx.scrape-uri","http://localhost/nginx_status"]
+    ports:
+    - containerPort: 9113
+# kubectl apply -f multi-pod.yml
+# kubectl delete -f multi-pod.yml (delete multi container pod)
 
+----Service----
+Cluster IP is the IP on the frontend which is automatically assigned by Kubernetes - this is only for use inside the cluster.
+Every cluster has a DNS service based on Core DNS. 
+Every container in a pod can also resolve any service name because of Core DNS.
+Labels are how a service sends traffic to a pod.
+*Always make sure your app knows the name of the service it is connecting to.
+A service gets a network port which can be mapped on any node. This is a Nodeport as every node has a port
 
+Example of adding NodePort the imperative way instead of declarative way which should be done from our yaml file
+# kubectl expose pod hello-pod --name=hello-svc --target-port=8080 --type=NodePort
+# kubectl get svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+hello-svc    NodePort    10.101.51.15   <none>        8080:31093/TCP   3m53s
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP          10h
 
+In your browser, go to http://localhost:31093/
+NodePorts are automatically assigned by Kubernetes from ports 30000-32767
+# kubectl delete svc hello-svc (delete NodePort service)
 
+--Declarative Service--
+When you don't explicitly name the type of port, you will get the default Cluster IP.
+# vi svc-nodeport.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ps-nodeport
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 31111
+    protocol: TCP
+  selector:
+    app: web
 
+# kubectl apply -f svc-nodeport.yml
+# kubectl describe svc ps-nodeport
+# kubectl get ep (get endpoints with same name as our created services)
+
+port = port the service listens on inside the cluster. When an app in the cluster wants to connect to listed service, it will connect via this port.
+targetPort = port the app container is listening on.
+nodePort = external port that will be mapped on every cluster node.
+selector - label selector that has to match the labels of our pod
+# kubectl get pods --show-labels
+
+App in container port 8080 --> targetPort 8080 --> Service ClusterIP: 80  --> 
+							   NodePort: 31111
+
+- Load balancer
+LoadBalancer Service. Will only work on supported cloud platforms (AKS, EKS, GKE, DOK, IBM, LKE etc...) Listens externally on 80 and forwards to Pod/container on 8080
+# vi svc-lb.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ps-lb
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: web
+# kubectl apply -f svc-lb.yml
+
+- Deployments
+Simple deployment used to deploy and manage the app in nigelpoulton/getting-started-k8s:1.0
+# vi deploy-complete
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deploy
+  labels:
+    app: web
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: hello-pod
+        image: nigelpoulton/getting-started-k8s:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+
+# kubectl get svc
+# kubectl get pods
+# kubectl get deploy
+* Everytime we create a service, we automatically get an endpoint object that hosts a list of healthy pods that match the label selector.
+
+- Rolling updates and rollbacks
+Simple deployment used to deploy and manage the app in nigelpoulton/ps-web:1.0
+# vi deploy-complete.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deploy
+  labels:
+    app: web
+spec:
+  selector:
+    matchLabels:
+      app: web
+  replicas: 5
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: hello-pod
+        image: nigelpoulton/getting-started-k8s:2.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+# kubectl apply -f deploy-complete.yml
+# kubectl rollout status deploy web-deploy
+# kubectl get rs (see old and new versions of the pod)
+# kubectl rollout history deploy web-deploy (see history)
+# kubectl rollout undo deploy web-deploy --to-revision 1 (rollback to first version)
+# kubectl get rs
 
 
 
