@@ -1,5 +1,75 @@
-Kubernetes is a container orchestration platform.
+Getting Started with Kubernetes - Nigel Poulton
+At the highest level, kubernetes is an orchestrator of microservices apps.
+Kubernetes is a container orchestration platform which is the main platform for managing containers at scale.
+It was introduced by Google in 2015. This first had the name 'Seven of Nines' but couldn't continue with that name due to copyright reasons. The 7 spokes in the icon is a tribute to the name.
+Kubernetes is often shortened to K8s as the 8 letters 'ubernete' = 8
 
+Containers and microservices bring a whole new set of management challenges. Legacy/Monolith apps used hundreds of servers but modern microservice apps use several thousands of containers. Kubernetes is seen as the OS of the cloud as it serves as that abstraction layer when we're trying to run an application.
+We package apps as containers which are described in a manifest file and given to Kubernetes to handle the rest.
+
+Monolith apps have all services in it bundled into one but in microservice architecture, all those services are packaged as their own app so we do NOT need to shutdown all services in the app just to patch one section of the app. These microservice apps now run on multiple containers according to scale.
+Cloud native apps have to be able to run anywhere we have Kubernetes. There are public cloud, hybrid app, and on prem.
+
+-------Kubernetes Architecture--------
+An example of what K8s will do for us is to organize and connect the different microservice apps we have into a functional application - this is called orchestration. K8s also reacts to real-time events because say a node fails, k8s will spin up a replacement to make sure all is running as it should.
+In a cluster, Control Plane which are in the control plane nodes are the brains of the cluster which does scheduling tasks and monitoring of events in the cluster.
+The workers/worker nodes are where we run our user and business apps.
+We would take the app code, and containerize it. This app is wrapped in a pod, which is wrapped in a deployment. All these are described in a yaml file. 
+app code in a container, container in a pod, pod in a deployment
+
+------Control Plane Nodes-------
+This is the brains of Kubernetes. These used to be called masters but Kubernetes replaced this with a less suggestive name (think master and slave).
+When having control nodes, 3 or 5 control nodes are the sweet spot as you always want a majority and minority when it comes to decision making. An odd number is always better than even numbers. 1 is also better than 2 control nodes in this case. When a leader control node goes down, the other follower nodes will select a new leader.
+Everyone of the control plane node has what is required for when it becomes a leader control node.
+
+Components that make up the Control plane
+- api server(kube-apiserver): this is the gateway to the server and the only component we will ever interact directly with. When we send commands to the cluster, it is through the api server and results come from here too
+- Cluster store: the only persistent component on the entire Control Plane. The config and state of the cluster are kept here. This is based on the etcd noSQL and super critical for operations. In a large environment, this could easily be the first bottleneck.
+- Controller manager: is like a controller of controllers and also watches for changes to make sure the observed state of the cluster matches the desired state. This controls the Node, deployment, and Endpoints, and any other controllers
+- Scheduler: watches api server for new tasks and assigns them to nodes.
+
+------Worker Nodes------
+This is where we install our apps. Worker nodes can be Linux or Windows
+3 worker components we care about:
+- Kubelet: this is the main kubernetes agent which registers nodes with clusters. It watches the APi server for work, executes pods, and reports back to the control plane.  
+- Container runtime: handles the running of containers with CRI (Container Runtime Interface) as Kubernetes and Kubelets do NOT know how to run containers. New platforms could use containerd. 
+- Kube proxy: this is the network brains of the nodes. Makes sure every pod gets IP's and ensure Load balancing works as it should.
+
+*Some cloud providers offer nodeless kubernetes. This is where you can run your containers without thinking about all these things stated. You have your config in your file and the cloud just runs them.
+
+Declarative Model and Desired State - This is key to Kubernetes
+Kubernetes runs ar a Declarative model which means we give Kubernetes a configuration of what we want, and it handles the rest for us without us telling it how to achieve our desired state configuration.
+The process of telling it how is known as the imperative model which we do NOT use even though Kubernetes supports it as well. Declarative = Declare what you want.
+Kubernetes is obsessed with observed state matching desired state so it is always looking to make sure they are in sync with DSC via watch loops.
+DSC = Desired State Configuration
+
+------Pods------
+Atomic unit of deployment in VMware = Virtual machine
+			     Docker = Container
+			     Kubernetes = Pod
+Pods are the most fundamental element in Kubernetes. This is a shared execution environment. Basically a collection of things an app needs to run. The containers in the pod will share the resources of the pod eg: 2 containers in a pod will share same IP but can have different ports they will communicate with. When you have apps that need to share volumes, we can have them in same pod. 2 containers in the same pod is mostly for specialist use cases though. The unit of scaling in K8s is pods - To scale up, add pods and to scale down, remove pods.
+In the pod, there is the main app container, and a helper container. 
+All containers in the pod are always scheduled to same cluster node. The term self-healing means a new identical pod is spun up to replace the dead pod but the old pod does NOT come back up.
+Pods are a great way to annotate and add labels, add olicies, resources, andd co-scheduling.
+
+------Stable Networking with Services------
+Because we cannot rely on pod IP's as they are constantly changing when the pods are replaces, Kubernetes Service objects come into play. The Service sits in front of the pods to provide a stable IP and DNS name, as well as Load balancing. It never changes the stable IP and DNS name. 
+	stable IP and DNS name
+web --> 	SVC	--> Multiple Pods
+	    Load Balancing
+
+Labels: these bring a lot of power and flexibility to Kubernetes. Everything in K8s gets a label. A label can be used to load balance any pods with the soecified label. Once the pod matches the label selector, service will load balance any traffic coming to it.
+Services 
+- only send traffic to healthy pods
+- can do session affinity
+- can send traffic outside of cluster
+- can do both TCP and UDP
+
+-----Deployments------
+
+
+
+===========================================================================================================================================================================================================
 Some distributions of Kubernetes are: 
 Amazon - EKS
 RedHat - Openshift
