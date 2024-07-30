@@ -350,11 +350,18 @@ Kubernetes Networking Requirements
 In summary, all pods and nodes should be able to connect or talk to each other with the IP addresses they have.
 
 Installation methods:
-Desktop
-Kubeadm
-Cloud Scenarios
+- Desktop
+- Kubeadm
+- Cloud Scenarios
 
-
+Cluster Network Ports
+Component		Ports(TCP)	Used By
+API 			 6443		All
+etcd 			 2379-2380	API/etcd
+Scheduler		 10251		Self
+Controller Manager	 10252		Self
+Kubelet			 10250		Control Plane
+NodePort Service	 30000-32767	All
 
 
 
