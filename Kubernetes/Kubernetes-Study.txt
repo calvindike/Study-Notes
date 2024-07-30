@@ -349,7 +349,10 @@ Kubernetes Networking Requirements
 2. Agents on a Node can communicate with all Pods on that Node.
 In summary, all pods and nodes should be able to connect or talk to each other with the IP addresses they have.
 
-
+Installation methods:
+Desktop
+Kubeadm
+Cloud Scenarios
 
 
 
