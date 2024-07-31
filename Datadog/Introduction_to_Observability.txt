@@ -5,11 +5,23 @@ Pillars of Observability
 1. Metrics: these data points are numerical vallues that can track anything about our environment over time.
 2. Logs: Computer generated file that contains time stamped information about usage of that system.
 3. Traces: used to track the time spent by an application processing a request and the status of this request.
+   The individual steps in traces are called spans. There are multiple spans in a trace.
+
+Datadog helps tie our metrics, traces, and logs together which makes monitoring or troubleshooting easier.
+
 
 SLO - Service Level objective
 APM - Application Performance Monitoring
 
 
+
+=============================================================
+
+There are three tags that the Agent will look for to help identify services:
+
+service: the name of the services, such as store-ads
+env: the environment in which the services is running. For example, production, internal, foundation-lab
+version: a number such as 1 or 1.2.3
 
 
 

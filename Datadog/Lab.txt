@@ -1,0 +1,5 @@
+# Commands to run when using Datadog learning lab and their purpose
+
+. createnewuser (generate new creds)
+creds (list credentials for lab)
+resetorg (reset lab account if having issues with trial org)

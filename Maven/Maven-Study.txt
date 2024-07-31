@@ -1,4 +1,4 @@
-Maven Fundamentals - Pluralsight
+Maven Fundamentals - Pluralsight - Bryan Hansen
 
 What is Maven?
 Maven is a tool to build source code and produce artifacts. It also helps us manage our dependencies for our applications.
