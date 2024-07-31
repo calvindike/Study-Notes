@@ -1,0 +1,245 @@
+===========================================================================================================================================================================================================
+Kubernetes Installation and Configuration Fundamentals - Anthony Nocentino
+
+What is Kubernetes
+Kubernetes is a container orchestrator: It starts and stops containers based on the configuration given to it. It also provides infrastructure abstraction which means we tell it what we want and it handles it for us as well as keeping the desired state we want by actively monitoring the containers and changing changing things when needed.
+
+Benefits of K8s
+- speed of deployment
+- ability to absorb change quickly
+- ability to recover quickly (when observed state is different from desired state)
+- allow us hide infra complexity in the cluster (developers don't need to worry about a lot when deploying applications)
+
+Kubernetes Principles
+- Desired State/Declarative Configuration
+- Controllers/Control Loops: constantly monitor and make changes to systems to make sure it's in desired state
+- Kubernetes API/API Server: provides a collection of objects that we can use to deploy in code
+API objects like pods, controllers, services, and nodes allow us to configure the state of the system declaratively and imperatively.
+API server is a Restful API over HTTP using JSON and is the way we interact with our cluster. This is also the only way Kubernetes interacts with our cluster. 
+
+Pods 
+A construct that represent one or more containers. This is pretty much our application or service and is the most basic unit of work. Pods are ephemeral and as such, are never redeployed instead, a new pod will be deployed to provide the services the old pod was running. Kubernetes tracks the state of our pods to make sure everything is healthy. It uses probes to do these health checks.
+
+Controllers
+Defines our desired state as well as create and manage pods for us. Controllers monitor and respond to the health states of pods according to the result of the probes.
+ReplicaSet
+This controller allows us to define the number of replicas of a pod we want running at all times.
+We will usually create a Deployment instead of a ReplicaSet when deploying an application as a Deployment covers the ReplicaSet configuration and helps us manage rollouts and rollbacks of these ReplicaSets.
+
+Services
+These add persistency to our ephemeral world. It helps with network abstraction for pod access, PI and DNS name for the service and is dynamically updated based on the Pod cycle. Serviecs are scaled by adding/removing pods.
+
+* Persistent volume is a pod independent storage. The pod claims this storage that we have configured/set from the cluster.
+
+Cluster components
+control plane node: leader
+node: worker
+Each node in a cluster contributes to the compute capacity of the cluster. Nodes can either be virtual or physical machines.
+
+Components of control plane node
+- API server: communication hub of our cluster. This is stateless.
+This is central to the control of our cluster. It validates any config coming to the cluster.
+- Cluster store(etcd): persists the state of our objects using key-value parirs
+- Scheduler: tells K8s which nodes to start pods on based on administrative policies or available resources
+Watches API server, schedule pods, resources, and respects constraints.
+- Controller Manager: implements lifecycle functions of the controllers that monitor the cluster. Pretty much in charge of desired state
+Executes controller loops, watch and update the API server and makes sure correct number of pods or replica sets are running.
+
+
+Node
+This is where our applications run. We can have as many nodes as possible.
+Components of nodes
+- Kubelet: monitors API server for changes and is responsible for pod lifecycle. This reports Node and Pod state
+- kube-proxy: has the responsibility to implement services, route traffic to pods, and load balance.
+- Container runtime: resoinsible for downloading images and run containers. Default is containerd but there are many others you can use. Docker used to be the container runtime but was changed in v1.2
+These will also run on the control plane nodes, not just the worker nodes.
+Kubelet and kube-proxy communicate directly with the API server.
+
+Cluster Add-on Pods
+Pods that provide special services to the pod
+DNS: uses Core DNS to provide DNS services to the pod
+Ingress controllers: for HTTP or layer7 loadbalancer
+Dashboard: for web based administration of cluster
+Overlays:
+
+Pod Operations
+We use kubectl to submit code to Kubernetes via the API server which stores the information in etcd. Scheduler schedules, and controller manager monitors the state after the kubelet receives work from the API server. Control plane nodes will usually only run pods that are system pods.
+*Personal note - You can look at things from a node level or from a cluster level.
+
+Kubernetes Networking Requirements
+1. Pods on a Node can communicate with all Pods on all Nodes without Network Address Translation (NAT)
+2. Agents on a Node can communicate with all Pods on that Node.
+In summary, all pods and nodes should be able to connect or talk to each other with the IP addresses they have.
+
+Installation methods:
+- Desktop
+- Kubeadm
+- Cloud Scenarios
+
+Cluster Network Ports
+Component		Ports(TCP)	Used By
+API 			 6443		All
+etcd 			 2379-2380	API/etcd
+Scheduler		 10251		Self
+Controller Manager	 10252		Self
+Kubelet			 10250		Control Plane
+NodePort Service	 30000-32767	All
+
+
+- Install container runtime --> # apt-get install -y containerd
+- Add gpg key
+- Add Kubernetes repository
+- Install packages needed --> # apt-get install kubelet kubeadm kubectl
+- Hold packages so apt does NOT aitomatically patch these when applying security updates --> # apt-mark hold  kubelet kubeadm kubectl containerd
+
+Specs:
+2 vCPU
+2GB RAM
+100GB
+Swap disabled
+Hostnames set on all nodes to not rely on DNS (testing)
+
+--- Installing Kubeadm on Control Plane ---
+SSH to Control node and run following comands
+$ wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml (download calico manifest)
+$ vi calico.yml
+CALICO_IPV4POOL_CIDR - change this to your network or leave default
+$ sudo kubeadm init --kubernetes-version v1.29.1 (initialize kubernetes and generate needed config files in /etc/kubernetes) To use latest, remove --kubernetes-version from command
+Run any other commands listed after initialization
+$ kubectl apply -f calico.yml
+$ kubectl get pods --all-namespaces --watch
+$ kubectl get nodes
+$ sudo systemctl status kubelet.service (should be active and running)
+
+
+Kubectl common operations 
+*https://kubernetes.io/docs/reference/kubectl/#operations
+- apply/create: create resources
+- run: start a pod from an image
+- explain: documentation of resources
+- delete: delete resource(s)
+- get: list resources
+- describe: show detailed resource information
+- exec: execute a command on a container (like docker exec -it)
+- logs: view logs on a container
+
+Kubernetes services also have aliases eg: nodes(no), pods(po), services(svc)
+
+Kubectl output format
+*https://kubernetes.io/docs/reference/kubectl/#output-options
+wide - output additional info
+yaml - YAML formatted API object
+json - JSOn formatted API object
+dry-run - print an object without sending it to the API server
+
+kubectl <command> <type> <name> <flags>
+kubectl   get 	   pods   pod1   --output=yaml
+kubectl create deployment nginx  --image=nginx
+
+For Kubectl autocompletion
+# echo 'source <(kubectl completion bash)' >>~/.bashrc && source ~/.bashrc
+
+# kubectl get pods --namespace kube-system (get system pods)
+# kubectl api-resources | more (list all api resources)
+
+We can use the --dry-run option to create a manifest file from an imperative kubectl command
+FROM (imperative)
+# kubectl create deployment hello-world --image=gcr.io/google-sammples/hello-app:1.0
+TO (create manifest)
+# kubectl create deployment hello-world --image=gcr.io/google-sammples/hello-app:1.0 --dry-run=client -o yaml > hello-deploy.yml
+TO (Manifest)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: hello-world
+  name: hello-world
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - image: gcr.io/google-sammples/hello-app:1.0
+        name: hello-app
+        resources: {}
+status: {}
+
+---Application Deployment Process---
+When we run 'kubectl apply <deployment>'
+- Kubectl sends our request to tht APi Server
+- API server looks at the information in the deployment manifest, and stores the objects in etcd
+- Controller Manager which is watching for any new objects will startup a controller for the deployment which will start up a ReplicaSet
+- ReplicaSet will create the number of Pods required for the Deployment and will write the information back to etcd
+- Scheduler which is watching etcd to see if there are any Pods not assigned to nodes yet, will schedule/assign the Pods to nodes in the cluster which will be updated in etcd
+- To start the Pods on the nodes, the Kubelets from the nodes asking the APi server if it has any work, will send a message to the Container Runtime once it finds Pods scheduled to be run on nodes to pull down the container images specified in our manifest to s=then start the Pods on nodes.
+- If the Pod is a member of a Service, that Service is updated on the Kube-proxy on that node.
+
+To get list of containers running on a node when using containerd
+# crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps  (docker ps -a if using Docker)
+
+# kubectl create deployment hello-world --image=gcr.io/google-samples/hello-app:1.0
+# kubectl run hello-world-pod --image=gcr.io/google-samples/hello-app:1.0
+#kubectl get pods
+NAME                          READY   STATUS    RESTARTS      AGE
+hello-world-7879445f4-wdcw5   1/1     Running   0             34s
+hello-world-pod               1/1     Running   0             6s
+
+<pod name>-<pod template hash>-<unique identifier>
+In the first pod, the string 7879445f4 is known as the pod template hash from a deployment apart.
+
+# kubectl logs hello-world-pod (look into pod logs)
+# kubectl describe pod hello-world-pod (see more details about pod)
+# kubectl describe deployment hello-world
+# kubectl describe replicasets hello-world
+# kubectl exec -it hello-world-pod -- /bin/sh (attach to container shell to run commands)
+
+
+# kubectl expose deployment hello-world --port=80 --target-port=8080
+Create a hello-world service that is listening on port 80 while the pod listens on port 8080
+# kubectl expose deployment hello-world --port=80 --target-port=8080 --dry-run=client -o yaml | more
+# kubectl edit deployments.apps hello-world (edit deployment/resource on the fly to reflect in etcd - this is not in our manifest which is NOT the best way to do it)
+# kubectl scale deployment hello-world --replicas=40 (another way to edit deployment on the fly)
+
+
+
+
+When you have multiple environments of kubernetes installed like cloud, kubeadm, minikube, docker-desktop, you will see them as contexts and you can change contexts to run commands against any of the environments.
+# kubectl config get-contexts
+CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
+*         docker-desktop   docker-desktop   docker-desktop
+          minikube         minikube         minikube
+
+# kubectl config use-context minikube (change context)
+
+
+===========================================================================================================================================================================================================
+Managing the Kubernetes API Server and Pods
+
+
+
+
+
+
+
+
+
+===========================================================================================================================================================================================================
+Managing Kubernetes Controllers and Deployments
+
+
+===========================================================================================================================================================================================================
+Configuring and Managing Kubernetes Storage and Scheduling
+
+
+===========================================================================================================================================================================================================
+
+
