@@ -364,10 +364,139 @@ Kubelet			 10250		Control Plane
 NodePort Service	 30000-32767	All
 
 
+- Install container runtime --> # apt-get install -y containerd
+- Add gpg key
+- Add Kubernetes repository
+- Install packages needed --> # apt-get install kubelet kubeadm kubectl
+- Hold packages so apt does NOT aitomatically patch these when applying security updates --> # apt-mark hold  kubelet kubeadm kubectl containerd
+
+Specs:
+2 vCPU
+2GB RAM
+100GB
+Swap disabled
+Hostnames set on all nodes to not rely on DNS (testing)
+
+--- Installing Kubeadm on Control Plane ---
+SSH to Control node and run following comands
+$ wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml (download calico manifest)
+$ vi calico.yml
+CALICO_IPV4POOL_CIDR - change this to your network or leave default
+$ sudo kubeadm init --kubernetes-version v1.29.1 (initialize kubernetes and generate needed config files in /etc/kubernetes) To use latest, remove --kubernetes-version from command
+Run any other commands listed after initialization
+$ kubectl apply -f calico.yml
+$ kubectl get pods --all-namespaces --watch
+$ kubectl get nodes
+$ sudo systemctl status kubelet.service (should be active and running)
+
+
+Kubectl common operations 
+*https://kubernetes.io/docs/reference/kubectl/#operations
+- apply/create: create resources
+- run: start a pod from an image
+- explain: documentation of resources
+- delete: delete resource(s)
+- get: list resources
+- describe: show detailed resource information
+- exec: execute a command on a container (like docker exec -it)
+- logs: view logs on a container
+
+Kubernetes services also have aliases eg: nodes(no), pods(po), services(svc)
+
+Kubectl output format
+*https://kubernetes.io/docs/reference/kubectl/#output-options
+wide - output additional info
+yaml - YAML formatted API object
+json - JSOn formatted API object
+dry-run - print an object without sending it to the API server
+
+kubectl <command> <type> <name> <flags>
+kubectl   get 	   pods   pod1   --output=yaml
+kubectl create deployment nginx  --image=nginx
+
+For Kubectl autocompletion
+# echo 'source <(kubectl completion bash)' >>~/.bashrc && source ~/.bashrc
+
+# kubectl get pods --namespace kube-system (get system pods)
+# kubectl api-resources | more (list all api resources)
+
+We can use the --dry-run option to create a manifest file from an imperative kubectl command
+FROM (imperative)
+# kubectl create deployment hello-world --image=gcr.io/google-sammples/hello-app:1.0
+TO (create manifest)
+# kubectl create deployment hello-world --image=gcr.io/google-sammples/hello-app:1.0 --dry-run=client -o yaml > hello-deploy.yml
+TO (Manifest)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: hello-world
+  name: hello-world
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - image: gcr.io/google-sammples/hello-app:1.0
+        name: hello-app
+        resources: {}
+status: {}
+
+---Application Deployment Process---
+When we run 'kubectl apply <deployment>'
+- Kubectl sends our request to tht APi Server
+- API server looks at the information in the deployment manifest, and stores the objects in etcd
+- Controller Manager which is watching for any new objects will startup a controller for the deployment which will start up a ReplicaSet
+- ReplicaSet will create the number of Pods required for the Deployment and will write the information back to etcd
+- Scheduler which is watching etcd to see if there are any Pods not assigned to nodes yet, will schedule/assign the Pods to nodes in the cluster which will be updated in etcd
+- To start the Pods on the nodes, the Kubelets from the nodes asking the APi server if it has any work, will send a message to the Container Runtime once it finds Pods scheduled to be run on nodes to pull down the container images specified in our manifest to s=then start the Pods on nodes.
+- If the Pod is a member of a Service, that Service is updated on the Kube-proxy on that node.
+
+To get list of containers running on a node when using containerd
+# crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps  (docker ps -a if using Docker)
+
+# kubectl create deployment hello-world --image=gcr.io/google-samples/hello-app:1.0
+# kubectl run hello-world-pod --image=gcr.io/google-samples/hello-app:1.0
+#kubectl get pods
+NAME                          READY   STATUS    RESTARTS      AGE
+hello-world-7879445f4-wdcw5   1/1     Running   0             34s
+hello-world-pod               1/1     Running   0             6s
+
+<pod name>-<pod template hash>-<unique identifier>
+In the first pod, the string 7879445f4 is known as the pod template hash from a deployment apart.
+
+# kubectl logs hello-world-pod (look into pod logs)
+# kubectl describe pod hello-world-pod (see more details about pod)
+# kubectl describe deployment hello-world
+# kubectl describe replicasets hello-world
+# kubectl exec -it hello-world-pod -- /bin/sh (attach to container shell to run commands)
+
+
+# kubectl expose deployment hello-world --port=80 --target-port=8080
+Create a hello-world service that is listening on port 80 while the pod listens on port 8080
+# kubectl expose deployment hello-world --port=80 --target-port=8080 --dry-run=client -o yaml | more
+# kubectl edit deployments.apps hello-world (edit deployment/resource on the fly to reflect in etcd - this is not in our manifest which is NOT the best way to do it)
+# kubectl scale deployment hello-world --replicas=40 (another way to edit deployment on the fly)
 
 
 
 
+When you have multiple environments of kubernetes installed like cloud, kubeadm, minikube, docker-desktop, you will see them as contexts and you can change contexts to run commands against any of the environments.
+# kubectl config get-contexts
+CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
+*         docker-desktop   docker-desktop   docker-desktop
+          minikube         minikube         minikube
+
+# kubectl config use-context minikube (change context)
 
 
 ===========================================================================================================================================================================================================
@@ -401,13 +530,6 @@ What Kops brings is ease of management though the lifecycle of your cluster in a
 - Upgrade
 - Modifications
 - Deletion of clusters
-
-
-
-
-
-
-
 
 
 
