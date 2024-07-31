@@ -20,8 +20,8 @@ from datadog_api_client.v2.model.metric_series import MetricSeries
 configuration = Configuration(
     host="https://app.datadoghq.com/"
 )
-configuration.api_key['apiKeyAuth'] = '0e57a2d8fec71136d61f13f28a3d4280'
-configuration.api_key['appKeyAuth'] = '34a9ec74b0d4a4b95051fdf5652e76491de1cf98'
+configuration.api_key['apiKeyAuth'] = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+configuration.api_key['appKeyAuth'] = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 #for user in range(100):
 body = MetricPayload(
     series=[
