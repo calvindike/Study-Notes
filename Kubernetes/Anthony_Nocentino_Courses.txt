@@ -224,6 +224,201 @@ CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
 ===========================================================================================================================================================================================================
 Managing the Kubernetes API Server and Pods
 
+Using the Kubernetes API
+Kubernetes API: a single surface area over the resources in our data center or cluster
+API Objects: collection of primitives used by Kubernetes to represent the state of our cluster, which also enables configuration of state
+API Server: the sole way to interact with our cluster and the sole way Kubernetes interacts with our cluster.
+
+--- API Server ---
+This is a client/server architecture that exchanges JSON objects over HTTP via a RESTFUL API.
+Client submits request, Server responds. The API is stateless as nothing is stored on here but is stored on etcd (cluster store).
+
+--- API Objects ---
+Persistent entities that allow us to build and deploy in Kubernetes. These are organized in 3 ways;
+1. Kind: string value representing the resource like Pods, Service, Deployment
+2. API Group: a way to organize like objects together based on their function eg. core, apps, storage
+3. API Version: defines the version schema of the representation of a particular object in the API server.
+
+Imperative configuration: using the cmdline commands to change the state of our cluster
+Declarative configuration: definint the desired state of our cluster in code inside a Manifest using languages like YAML, JSON
+ kubectl apply -f <manifest> to apply the change from the Manifest
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+
+https://kubernetes.io/docs/reference/kubernetes-api/
+
+--- Dry-run ---
+Server-side dry-run is used when we want to make a request but not sure if the request is properly formatted. The request here will NOT be persisted in stoage but will be processed as a typical request. This is more of a test.
+eg: kubectl apply -f deployment.yaml --dry-run=server
+
+Client-side dry-run will write the object to be created to stdout, validate manifest syntax, and is also great for generating syntactically correct YAMl manifests.
+eg: kubectl create deployment nginx -image=nginx --dry-run=client -o yaml  (This will print the manifest from this command to stdout but can also be redireccted to a file using > filename.yaml)
+
+--- Kubectl diff ---
+Used to check the difference between the current state of the resource in our cluster and resources defined in our Manifest or stdin. This outputs the differences to stdout
+eg: 
+# kubectl apply -f nginx-deployment.yaml (with ReplicaSet of 3)
+# kubectl scale --replicas=5 deployment nginx-deployment (increase ReplicaSet to 5 imperatively)
+deployment.apps/nginx-deployment scaled
+
+# kubectl diff -f newdeployment.yaml
+diff -u -N /var/folders/qm/4p3gtch55tz9vd0t909km5x00000gn/T/LIVE-1587402659/apps.v1.Deployment.default.nginx-deployment /var/folders/qm/4p3gtch55tz9vd0t909km5x00000gn/T/MERGED-3228162705/apps.v1.Deployment.default.nginx-deployment
+--- /var/folders/qm/4p3gtch55tz9vd0t909km5x00000gn/T/LIVE-1587402659/apps.v1.Deployment.default.nginx-deployment        2024-07-31 19:28:09
++++ /var/folders/qm/4p3gtch55tz9vd0t909km5x00000gn/T/MERGED-3228162705/apps.v1.Deployment.default.nginx-deployment      2024-07-31 19:28:09
+@@ -6,7 +6,7 @@
+     kubectl.kubernetes.io/last-applied-configuration: |
+       {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"nginx"},"name":"nginx-deployment","namespace":"default"},"spec":{"replicas":3,"selector":{"matchLabels":{"app":"nginx"}},"template":{"metadata":{"labels":{"app":"nginx"}},"spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx","ports":[{"containerPort":80}]}]}}}}
+   creationTimestamp: "2024-07-31T23:18:24Z"
+-  generation: 2
++  generation: 3
+   labels:
+     app: nginx
+   name: nginx-deployment
+@@ -15,7 +15,7 @@
+   uid: 49f20f28-9843-45f9-a905-0413df06ad52
+ spec:
+   progressDeadlineSeconds: 600
+-  replicas: 5
++  replicas: 3
+   revisionHistoryLimit: 10
+   selector:
+     matchLabels:
+
+
+--- API Groups ---
+API Groups enable better organization of resources 
+There is Core API group(Legacy Group) and Named API Groups
+Core: Pod, Node, Namespace, PersistentVolume, PersistentVolumeClaim - These have been around since the inception of Kubernetes
+Named: 
+apps group: Deployment object
+storage.k8s.io: StorageClass object
+rbac.authorization.k8s.io: Role object
+
+--- API Versioning ---
+The APi is versioned at the APi level so we know what version we are interacting with in code. THis helps to provide stability for existing implementations as you can choose which AP version you want to interact with. They are also usually backwards compatible and also forward change so that we can specofy the APi version we want to work with in our code.
+The versionsa also move through Alpha/Experimental -> Beta/Pre-release -> Stable/General Availability
+# kubectl api-resources
+# kubectl api-resources --api-group=apps
+
+
+*Anatomy of an API Request 
+When we enter a command, that yaml command will be transformed to JSON and sent to the API server. If request is to get something, the informatin will come from the cluster store but if it is to deploy, the information will be stored in the cluster store before being sent out by the scheduler and controller.
+
+RESTful API Verbs
+GET: get data from a specified resource(s)
+POST: create a resource
+DELETE: delete a resource
+PUT: create or update entire existing resource
+PATCH: modify the specified fields or elements of a resource
+
+Special API Requests
+LOG: retrieve logs from a container in a Pod
+EXEC: exec a command in a container, get the output
+WATCH: change notifications on a resource with streaming output
+
+API Resource Location(API Paths)
+Core API(Legacy): http://apiserver:port/api/$VERSION/$RESOURCE_TYPE
+                  http://apiserver:port/api/$VERSION/namespaces/$NAMESPACE/$RESOURCE_TYPE/$RESOURCE_NAME
+
+API Groups: http://apiserver:port/apis/$GROUPNAME/$VERSION/$RESOURCE_TYPE
+            http://apiserver:port/apis/$GROUPNAME/$VERSION/namespaces/$NAMESPACE/$RESOURCE_TYPE/$RESOURCE_NAME
+
+Response Codes from API server (these are based on what happened in the APi based on our request)
+Success (2xx)
+200 = OK
+201 = Created
+202 = Accepted
+
+Client Errors (4xx)
+401 = Unauthorized
+403 = Access Denied
+404 = Resource Not Found
+
+Server Errors (5xx)
+500 = Internal Server Error
+
+In looking at the lifecycle of an API request from a client to a Server, we have the Connection -> Authentication -> Authorization -> Admission Control 
+Connection: can we make connection to the API server (http over TCP and TLS Encrypted)
+Authentication: are you a valid user?
+Authorization: can you perform the requested action. In Kubernetes, access is denied by default, then allowed when a user has been assigned permissions to a particular resource ie default deny.
+Admission Control: gives us admin control over a request. The request passes through Admission controller which could modify or reject a request. Object being requested is also validated here.
+
+# kubectl get pod hello-world -v 6 (increase verbosity which will show us the api path, response code, and how long the request took)
+Verbosity can be increased from 6 upwards to get additional information including headers.
+# kubectl proxy & 
+# curl http://localhost:8001/api/v1/namespaces/default/pods/hello-world | head -n 20
+# fg
+ctrl+c
+# kubectl logs hello-world -v 6
+
+
+Managing Objects with Labels, Annotations, and Namespaces
+To organize objects in Kubernetes, we use 3 primary methods
+- Namespaces: used when we want to put a boundary around a resource in terms of security, naming, or resource allocation.
+This gives us the ability to subdivide a cluster and it's resources. We deploy objects in a Namespace which helps with resource isolation/organization. 
+We can also limit resources to particular Namespaces when looking at CPU, RAM, Storage
+A resource can only be in one namespace at a time.
+Some objects in K8s are Namespaced, while some others are not. 
+Namespaced = Pods, Controllers, Services
+Not Namespaced = PersistentVolumes, Nodes
+
+To check resources that can be part of a namespace
+# kubectl api-resources --namespaced=true  (false for the opposite)
+
+- imperative: 	# kubectl create namespace playground1
+		# kubectl run nginx --image=nginx --namespace playground1
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: playgroundinyaml
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: playgroundinyaml
+
+- declarative: # kubectl apply -f Namespace.yaml
+
+
+
+
+default Namespace = default when no Namespace is specified
+kube-public Namespace = created automatically and used to share objects across the entire cluster for all users eg: configMaps are here
+kube-system Namespace = system Namespace where we find objects like etcd
+We also have the option of defining a user defined Namespace imperatively or declaratively.
+
+- Labels: when you want to act on an object or groups of objects
+- Annotations: when you want to add a bit more information or metadata about a particular resource
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
