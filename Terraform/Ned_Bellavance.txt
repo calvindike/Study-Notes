@@ -1,3 +1,209 @@
 Terraform - Getting Started - Ned Bellavance - Pluralsight
 
+Infrastructure as Code (IAC)
+Provisioning Infra through software to achieve consistent and predictable environments. Goal here is to achieve consistency across multiple environments via code.
+
+Core concepts
+- Defined in code
+- Code is stored in source control eg. git, subversion, perforce
+- Terraform falls more under the Declarative model
+	2 approaches to implementing are imperative and declarative
+		Imperative = telling what to do, and how to do it.
+		Declarative = telling what to do only.
+- Idempotent and consistency
+Idempotency - checking that the current state matches desired state before attempting to make changes so as not to make same change multiple times
+- Push or pull (with the target environment) Terraform is a push type environment. 
+Changes are pushed to the environment
+
+Infrastructure as Code Benefits
+- Reusable components of code
+- Automated deployment
+- Repeatable process (integrate code with pipeline or process)
+- Consistent environments - when we want our QA, Staging, and Production environments to match
+- Documented architecture (You get more insight about the architecture when you can see how everything is integrated or come together in your code)
+
+What is Terraform?
+Terraform is a tool to automate the deployment and amanagement of infrastructure
+- The core is an Open source project managed by Hashicorp but there are also paid versions.
+- Vendor-agnostic so you can use it against any service with an API.
+- Single binary file compiled from Go language.
+- Declarative Syntax
+- Hashicorp configuration language (HCL) or JSON
+- Push-based deployment (no agent to install nor remote server)
+
+Core components of terraform
+- Executable file - binary file we invoke to run terraform 
+- Configuration will be in config files .tf
+- Provider plugins - executables invoked by terraform to interact with service API's eg. aws provider plugin to interact with AWS
+- State data - mapping of current config stored in the state file. Terraform compares this file to any pushed config to make sure the state does not have the new changes being pushed
+
+3 Terraform Object Types
+- Providers: provide information about provider a plugin we want to use. AWS plugin will want to know what aws credentials we want to use.
+- Resources: things we want to create in a target environmant. Each resource is associated with a provider
+- Data source: a way to query information from a provider that we might want to use. This is more of a read only resource.
+
+Block Syntax
+main.tf
+block_type "label" "name_label" {
+  key = "value"
+  nested_block {
+    key = "value"
+  }
+}
+
+We can have nested blocks in nested blocks
+main.tf
+resource "aws_instance" "web_server" {
+  name = "web-server"
+  ebs_volume {
+    size = 40
+  }
+}
+
+Terraform Object reference
+<resource_type>.<name_label>.<attribute>
+aws_instance.web_server.name
+
+Terraform Commands
+$ terraform init (initialize terraform in current directory)
+$ terraform plan
+$ terraform validate
+$ terraform apply
+$ terraform destroy
+$ terraform state show
+$ terraform plan -out <FILENAME>  (save the output to the file specified)
+$ terraform apply <FILENAME>  (apply changes in the file)
+
+How to work with data in Terraform.
+3 concepts
+1. Input variables: used to pass information into terraform at runtime
+
+variable "name_label" {
+  type	= value			--> defines datatype associated with our variable and provides a certain level of error checking. when a number is specified, a string can't be inputted
+  description = "string"	--> explain purpose behind the input variable
+  default = value		--> allows us to set a default value for the variable. if no default value is set, terraform will prompt in the cmdline
+  sensitive = true | false 	--> used when you have to submit sensitive values like creds or API keys. true = sensitive, false = plain text
+}
+
+Variable Syntax
+variable "billing_tag" {}  --> simple way to define variable
+
+variable "aws_region" {
+  type = string
+  description = "Region to use for AWS resources"
+  default = "us-east-1"
+}
+
+Terraform Variable Reference
+var.<name_label>
+var.aws_region (get string stored in variable aws_region
+
+
+Terraform Data Types
+3 Categories
+- Primitive (string, number, bool)
+- Collection (List, set, map)
+- Structural (Tuple, object)
+2 other data types
+- Any : list(any)
+- Null 
+Tuples are like lists, and objects are like maps but they allow us to mix the data types in the grouping while the Collection data types do NOT allow for that.
+
+-------- List --------
+[1, 2, 3, 4]
+["us-east-1", "us-east-2", "us-west-1"]
+
+[1, "us-east-2", "true"] --> This is an invalid List, but a valid Tuple
+
+- Referencing List Values 
+
+variable "aws_regions" {
+  type = list(string)
+  description = "Regions to use for AWS resources"
+  default = ["us-east-1", "us-east-2", "us-west-1"]
+}
+
+var.<name_label>[<element_number>]
+var.aws_regions[0] --> "us-east-1"
+
+-------- Map --------
+Map: this is pretty much a dictionary with key-value pairs
+{
+  small = "t2.micro"
+  medium = "t2.small"
+  large = "t2.large"
+}
+
+- Referencing Map Values
+
+variable "aws_instance_sizes" {
+  type = map(string)
+  description = "Instance sizes to use in AWS"
+  default {
+    small = "t2.micro"
+    medium = "t2.small"
+    large = "t2.large"
+  }
+}
+
+var.<name_label>.<key_name> or var.<name_label>["key_name"]
+var.aws_instance_sizes.small or var.aws_instance_sizes["small"]
+
+* We would usually have the variables defined in a variables.tf or vars.tf file
+
+
+2. Local values: computed values inside the configuration that can be reference throughout the config. These are regular variables in other programming languages
+We can't submit values directly to these and are useful when the value has to be referenced multiple times. Also used  to transform data before using it elsewhere in our configuration. Internal scratch pad for our configuraiton.
+
+local {
+  key = value
+}
+
+locals {
+  instance_prefix = "globo"
+  common_tage = {
+    company = "Globomantics"
+    project = var.project
+    billing_code = var.billing_code
+  }
+}
+
+- Reference Local Value
+
+local.<key>
+local.instance_prefix
+local.common_tags.company
+
+
+
+
+
+
+
+
+3. Output values: defined in the configuration and the value of each output depends on what is referenced in the config.
+
+===================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
