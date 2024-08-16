@@ -82,8 +82,11 @@ Common types of blocks - https://www.geeksforgeeks.org/different-types-of-blocks
 	These variables are not exposed to other configurations or modules and are purely for internal use within the same configuration.
 ###############
 
+Use the -auto-approve option when you don't want to e prompted to type in yes on either apply or destroy commands.
 
-
+Make terraform to not prompt on destroy command
+$ terraform destroy -auto-approve
+$ rm -rf .terraform*
 
 
 

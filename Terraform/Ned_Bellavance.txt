@@ -76,6 +76,8 @@ $ terraform apply <FILENAME>  (apply changes in the file)
 
 How to work with data in Terraform.
 3 concepts
+
+###### Input Variables ######
 1. Input variables: used to pass information into terraform at runtime
 
 variable "name_label" {
@@ -96,7 +98,8 @@ variable "aws_region" {
 
 Terraform Variable Reference
 var.<name_label>
-var.aws_region (get string stored in variable aws_region
+var.aws_region (get string stored in variable aws_region --> "us-east-1"
+
 
 
 Terraform Data Types
@@ -105,11 +108,12 @@ Terraform Data Types
 - Collection (List, set, map)
 - Structural (Tuple, object)
 2 other data types
-- Any : list(any)
-- Null 
+- Any : a way to signal that you don't know what data will be stored by the collection yet.
+eg: list(any)
+- Null : commonly used to set the default value of a variable.
 Tuples are like lists, and objects are like maps but they allow us to mix the data types in the grouping while the Collection data types do NOT allow for that.
 
--------- List --------
+======= List =======
 [1, 2, 3, 4]
 ["us-east-1", "us-east-2", "us-west-1"]
 
@@ -120,21 +124,19 @@ Tuples are like lists, and objects are like maps but they allow us to mix the da
 variable "aws_regions" {
   type = list(string)
   description = "Regions to use for AWS resources"
-  default = ["us-east-1", "us-east-2", "us-west-1"]
+  default = ["us-east-1", "us-east-2", "us-west-1", "us-west-2"]
 }
 
 var.<name_label>[<element_number>]
 var.aws_regions[0] --> "us-east-1"
 
--------- Map --------
+====== Map =======
 Map: this is pretty much a dictionary with key-value pairs
 {
   small = "t2.micro"
   medium = "t2.small"
   large = "t2.large"
 }
-
-- Referencing Map Values
 
 variable "aws_instance_sizes" {
   type = map(string)
@@ -146,14 +148,16 @@ variable "aws_instance_sizes" {
   }
 }
 
+To reference collection values for Map:
 var.<name_label>.<key_name> or var.<name_label>["key_name"]
 var.aws_instance_sizes.small or var.aws_instance_sizes["small"]
 
 * We would usually have the variables defined in a variables.tf or vars.tf file
 
+########## Local Values ###########
 
-2. Local values: computed values inside the configuration that can be reference throughout the config. These are regular variables in other programming languages
-We can't submit values directly to these and are useful when the value has to be referenced multiple times. Also used  to transform data before using it elsewhere in our configuration. Internal scratch pad for our configuraiton.
+2. Local values: are values computed inside the configuration that can be reference throughout the config. These are regular variables in other programming languages.
+We can't submit values directly to these and they are useful when the value has to be referenced multiple times. They are also used to transform data before using it elsewhere in our configuration. Internal scratch pad for our configuraiton.
 
 local {
   key = value
@@ -169,11 +173,70 @@ locals {
 }
 
 - Reference Local Value
-
 local.<key>
 local.instance_prefix
 local.common_tags.company
 
+###### Outputs ######
+Outputs are how we get information from Terraform. They are printed out to the terminal window after a terraform run.
+
+Syntax:
+output "name_label" {
+  value = value
+  description = "string"
+  sensitive = true | false
+}
+
+output "public_dns_hostname" {
+  value = aws_instance.web_server.public_dns
+  descrption = "Public DNS hostname of web server"
+}
+
+At the end of the terraform apply command, we get the output we wanted
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+Outputs:
+aws_instance_public_dns = "http://ec2-54-236-242-153.compute-1.amazonaws.com"
+
+
+*We can format the code in our working directory by running 'terraform fmt' which will convert the code to Hashicorp's standard.
+This helps our code to be consistent and easy to read.
+- check flag: check code but not alter files (makes sure code is good and will return non-zero code if not formatted properly)
+- recursive: check and fix formatting of terraform files in working directory.
+
+This 'terraform fmt' command does not check the syntax or logic of code unless there's something that jumps out to it. 
+
+terraform validate: help make sure our configuration is correct. It checks the syntax of resources and providers so make sure to run 'terraform init' before this.
+Checks syntax and logic of our commands.
+Does not check state and no guarantee of success 
+
+Supply Variable Values
+There are multiple ways of doing this
+1. default value will be using the equals sign to pass the variable
+eg: aws_region = "us-east-1"
+
+2. -var flag: used at the command line when executing terraform apply
+terraform apply -var aws_region us-east-1
+3. -var-file flag: have the variables in a file and pass the file while running the terraform command. Inside the file, you'll have the key and value as --> variable_name = 'variable_value'
+terraform apply -var-file var_file
+4. terraform.tfvars or terraform.tfvars.json: This file has to be in same directory as other terraform files. Terraform will find these files automatically and use the variables in them.
+$ vi terraform.tfvars
+billing_code = "xxxxxxx"
+project = "globo-web-app"
+5. .auto.tfvars or .auto.tfvars.json: Ant file that ends in either of these 2 will automatically be picked up by terraform as well.
+6. TF_VAR_: In this case, terraform will look for any environmental variables that starts with 'TF_VAR_<variable_name>' and use this. This has to be capitalized for terraform to use it.
+$ export TF_VAR_aws_access_key="xxxxxxxxxxxxxxx"
+$ export TF_VAR_aws_secret_key="xxxxxxxxxxxxxxxxxxxxxxxxx"
+
+Order of evaluation or precedence for supplying variable values: This is from lowest to highest
+Default values in variable definitions
+TF_VAR_ environment variable
+terraform.tfvars or terraform.tfvars.json
+.auto.tfvars or .auto.tfvars.json
+-var-file flag
+-var flag cmdline
+
+If you want to temporarily overwrite a variable while testing and it is already set in say the .tfvars file, you can pass it to the cmdline to quickly use the new variable value to test.
+If we had env variable as well as *.tfvars file and we run 'terraform apply', terraform will use the variable in *.tfvars file as it is higher than the TF_VAR environment variable.
 
 
 
