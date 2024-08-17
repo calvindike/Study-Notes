@@ -294,17 +294,90 @@ This will create 3 instances with the names: dev-us-central1-a, dev-asia-east1-b
 Resource Dependencies
 While building infrastructure, we could want a visual representation of how our infrastructure is connected. A dependency graph helps us understand our infrastructure before deployment. Terraform builds the dependecy graph for our configurations to generate plans and refresh states. 
 Terraform creates a dependency graph to determine the correct order of operations and will perform operations in parallel when it is safe to do so.
+
 2 types of dependencies terraform can handle
 - Implicit dependency: dependencies known to Terraform are detected automatically
-- Explicit dependency: dependencies unknown to Terraform must be configured explicitly.
-
 An example of implicit dependency which is handled automatically by Terraform is the fact we cannot create a compute instance until the network is created, or that we cannot assign a static IP to a compute instance until a static IP is reserverd.
-We can use depends_on to declare an ecplicit dependency to Terraform.
+- Explicit(unknown) dependency: dependencies unknown to Terraform must be configured explicitly.
+We can use depends_on to declare an explicit dependency to Terraform. Example is when we want to create a client VM only after the Server VM has been created. 
+In the code below, we're telling Terraform to create the client compute instance only after the server compute instance has been created.
+
+resource "google_compute_instance" "client" {
+  ...
+  depends_on = [google_compute_instance.server]
+}
 
 When we run 'terraform apply' we can see the order in which things are created.
 
+Variables
+Variables parameterize our configuration without altering the source code. Without variables, resource arguments are hardcoded within the configuration which is NOT the best practice.
+Variables allow us to assign a value to the resource attribute at run time.
+After a variable is defined, there are different ways to set it's value at run time, including environmental variables, CLI options, and key-value files i.e Variables separate source code from value assignments.
+Variables must be declared in the variables block and it is recommended to save all variables in variables.tf or vars.tf
 
+Syntax:
+variable "variable_name" {
+  type = <variable_type>
+  description = "<variable_description>"
+  default  "<default value of variable>"
+  sensitive = true # left as true because if it is not sensitive, you can ommit the sensitive argument
+}
 
+variable "bucket_region" {
+  type = string
+  description = "Region for bucket"
+  default = "US"
+  sensitive = true
+}
+
+2 rules for naming variables
+- name of the variable must be unique within a module
+- variable names cannot be keywords
+
+types: bool, number, string
+When no value is set for a variable. the value specified in the default argument is used.
+The name of the variable in the variable block has to match the reference made within the resource block. The default value can be changed by assigning a value as an environmental variable or if the .tfvars file which is pointed to by using -var
+
+- tf apply -var-file my-vars.tfvars (recommended method - useful for quickly switching between sets of variables and versioning them)
+- terraform apply -var project_id="my-project" (CLI options - useful when running quick examples on simple files)
+- TF_VAR_project_id="my-project" \ (environmental variables - useful in scripts and pipelines)
+tf apply
+- tf apply (using terraform.tfvars)
+
+Remember there is an order of operation on which method is used above the other.
+The description documents the purpose of the variable
+sensitive is a way of preventing sensitive information from being displayed in the cmd output or log files. eg. API tokens or DB creds
+
+Use variables only when necessary
+- Only parameterize values that must vary for each instance or environment
+- Changing a variable with a default value is backward-compatible
+- Removing a variable is not backward-compatible
+- For root modules, provide values to variables using .tfvars file
+- Give variables descriptive names
+- Provide meaningful descriptions
+
+Output 
+Output values are similar to return values in regular programming languages
+They expose information about the resource to the user of the Terraform configuraton. We can view information about the resources we created on the cmdline
+We can extract say an IP address and input it to another resource that needs it.
+Arguments in an output block
+- value: returns a value
+- description: optional argument that provides an explanation of the purpose of the output and expected value.
+- sensitive: mask values to a resource attribute
+
+It is recommended to use output values, instead of user-supplied inputs for computed attributes of a resource.
+To query all output values run:
+$ terraform output
+Make sure outputs are declare in outputs.tf file
+
+Terraform Registry: Intereactive resource for discovering providers and modules. Solutions developed by Hashicorp, third party vendors, and the Terraform community.
+It provides plugins
+
+Cloud Foundation Toolkit(CFT): Provides a series of reference modules for Terraform that reflect Google Cloud best practices.
+CFT modules can be used without modification to quickly build a repeatable enterprise-ready foundation in Google Cloud.
+CFT modules are also referred to as Terraform blueprints.
+
+- You can also use Cloud Foundation Fabric (CFF), a collection of modules and examples for fast prototyping or to be modified and used in organizations.
 
 
 
