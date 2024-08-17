@@ -101,7 +101,6 @@ var.<name_label>
 var.aws_region (get string stored in variable aws_region --> "us-east-1"
 
 
-
 Terraform Data Types
 3 Categories
 - Primitive (string, number, bool)
@@ -267,22 +266,6 @@ If we had env variable as well as *.tfvars file and we run 'terraform apply', te
 
 
 ==================================================================================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

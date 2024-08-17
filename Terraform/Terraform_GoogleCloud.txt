@@ -1,0 +1,339 @@
+Getting started with Terraform for Google Cloud - Google Cloud
+
+##### Introduction to Terraform for Google Cloud #####
+Infrastructure as Code (IaC)
+This is a way of deploying infrastructure as code instead of manually doing this.
+Benefits of IaC
+- Declarative: specify desired state of infrastructure, not updates.
+- Code management: managed just like a source code (commit, version, trace, and collaborate)
+- Auditable: compare infrastructure between desired and current state
+- Portable: build reusable modules across an org for scaling.
+
+Provisioning vs Configuration
+These are different as tools Iac is used for provisioning but tools like ansible, salt.. are used for configuration management
+
+IaC
+- Used for provisioning and managing cloud resources eg. creating and provisioning a VM instance (launching a GKE cluster)
+- Referring to frameworks that manipulate Google Cloud APIs to deploy the infrastructure.
+
+Configuration Management
+- Used for virtual machine OS-level configuration eg. configuring internals of VMs (deploy containers into the GKE cluster)
+- Referring to package configurations nd software maintenance
+
+declarative = I should have 5 servers (what to create)
+imperative = Give me 5 servers (how to create)
+
+This declarative will only make sure desired state is matched but imperative will keep provisioning more servers the more it runs.
+
+Terraform is an IaC tool created by Hashicorp that lets us provision Google Cloud resources with declarative configuration files
+The language used here is Hashicorp Configuration Language (HCL)
+
+Features
+- Multi-cloud and Multi-API
+- Enterprise support
+- Large community (including a registry)
+- Infrastructure provisioning
+
+- We can provision resources
+- Create resource dependencies
+- Standardize configurations
+- Validate inputs to resource arguments
+
+Standard IaC Configuration Workflow
+1. Scope: Confirm the resources required for a project
+2. Author: Author/write the configuration files based on the scope
+3. Initialize: Download the provider plugins and initialize directory
+4. Plan: View execution plan for resources created, modified, or destroyed.
+5. Apply: Create actual infrastructure resources
+
+
+Terraform use cases
+- Manage infrastructure: Terraform takes an immutable approach to building and managing infrastructure.
+- Track changes: Terraform enables us to review the changes before they are applied to the configuration setup (this is done by checking with the state files)
+- Automate changes: Terraform defines the end state of the infrastructure instead of a series of steps to achieve it
+- Standardize the configuration: Terraform uses modules to implement best practices and improve efficiency
+
+Using Terraform
+- Terraform recognizes config files written in .tf file
+- Terraform generates an execution plan (terraform plan -out <file>)
+- Terraform uses this plan to create infrastructure (terraform apply <file>)
+- Terraform determines the changes and creates incremental execution plans
+
+3 Terraform tiers
+- Community Edition
+- Terraform Cloud
+- Terraform Enterprise
+
+##### Terms and Concepts ######
+- Terraform uses configuration files to declare an infratructure element.
+- The configuration is written in terraform language with a .tf extension
+- A configuration consists:
+	- A root module/root configuration: this is the working directory where the terraform commands are run -- has the main.tf file.
+	- Zero or more child modules ( a directory inside the root module that could contain main.tf, providers.tf, variables.tf, outputs.tf, terraform.tfvars )
+		Note: variables.tf, outputs.tf, and terraform.tfvars are optional but recommended.
+
+Terraform will look for any .tf files in the root module/working directory and use them to create a plan and infrastructure elements
+
+HCL - Hashicorp Configuration Language
+- Used to create and manage API-based resources predominantly in the cloud. 
+Terraform uses HCL to define resources in our cloud environment, create dependencies with the resources, and define the datato be fetched. 
+*Resources are infrastructure objects such as VM's, Storage buckets, Containers, Networks
+- HCL is a configuration language, not a programming language
+- It includes limited set of primitives such as variables, resources, outputs and modules
+- It does NOT include traditional statements or control loops.
+
+HCL Syntax
+<BLOCK_TYPE> "<BLOCK_LABEL" "<BLOCK_LABEL>" {
+  # Block body
+  <IDENTIFIER> = <EXPRESSION> #Argument
+}
+
+Blocks
+Arguments
+Identifiers
+Expressions
+Comments
+
+Blocks: lines of code that belong to a certain type eg: resources, variables, outputs. A block can be simple or nested to include another block type.
+Arguments: part of a block and used to allocate a value to a name. Some blocks have mandatory arguments while others are optional.
+Identifiers: names of an argument, block type, and any Terraform-specific constructs. Identifiers can include letters, underscores, hyphens, and digits (they cannot start with a digit)
+Expressions: can be used to assign a value to an identifier within a code block. These can be simple or complex.
+Comments: starts with a hash (#) for single-line comment.
+
+*Note that the order of the blocks or files does NOT matter since HCL is a declarative language
+
+				######### Resources #########
+Resources are code blocks that define infrastructure components. A resource is identified by the keyword, resource, followed by the resource type, and resource name
+
+resource "google_storage_bucket" "example_bucket" {
+  name	= "<unique_bucket_name>" //Required
+  location = "US"
+}
+
+resource "google_compute_instance" "my-instance" {
+  name = "test"
+  machine_type = "e2-medium"
+  zone = "us-central1-a"
+  boot_disk {
+      initialize_params {
+        image - "debian-cloud/debian-9"
+       }
+  }
+  network_interface {
+    network = "default"
+    }
+  }
+}
+In this case, we have 2 resource blocks - the first resource type is google_storage_bucket and resource name is example_bucket while the second resource type is google_compute_instance and resource name is my_instance.
+Terraform uses the resource type and name together as an identifier for the resource.
+For the first resource, we must specify the name and location arguments to sucessfully create resource
+For the second resource, we must specify the name, machine_type, and network_interface arguments to create an instance. Zone and tags in this case, are optional. 
+We can use separate files, for example: files for instances, storage buckets, and datasets if we haev lengthy resource configurations.
+
+				######### Providers #########
+Providers implement every resource type. Without providers, terraform cannot manage any type of infrastructure. In the providers.tf block, we secify the providers block that we will use.
+Terraform downloads the provider plugin in the root configuration when the provider is declared.
+Providers expose specific APIs as terraform resources, and manage their interactions.
+
+terraform {
+  required_providers {
+    google = {
+      source = "hashicorp/google"
+      version = "4.23.0"
+    }
+  }
+}
+
+provider "google" {
+  # Configuration options
+  project = <project_id>
+  region = "us-central1"
+
+Arguments such as project and region in the provider block are specific to this google provider. When a provider block is not included within a Terraform configuration, Terraform assumes an empty default configuration.
+An optional argument that is recommended is the version argument which constrain the provider to a specific version, to prevent downloading a new version that could contain breaking changes. When a version is not specified, the most recent provider version will be downloaded during initialization.
+
+				########### Variables ############
+Variables are used to parameterize our configuration. We parameterize arguments to eliminate hard coding values eg: Region, project ID, zone ...
+We can define a resource attribute at run time or centrally in a file with a .tfvars extension.
+Input Variables: serve as parameters for terraform allowing easy customization and sharing without having to alter source code
+Eg:
+- In main.tf (Declare storage bucket)
+location
+storage_class
+- In variables.tf (Parameterize resource attribute)
+variable location {
+ ..
+}
+- In terraform.tfvars (Define values at run time or in a file)
+location = "US"
+storage_class = "STANDARD"
+
+				########### Outputs ###########
+Output values are stored in outputs.tf file. The output values expose values of resource attributes. The output of the resource values which can be used elsewehere in our configuration are gotten via the output.tf file. Some of the attributes are gotten after terraform creates the resource. The label after the output keyword is the name which must be a valid identifier. In a root module, the name is displayed to the viewer, but in a child module it can be used to access the value. The value argument states an expression that returns the value argument to the user.
+
+output "bucket_URL" {
+  value = google_storage_bucket.mybucket.URL
+}
+
+Output after terraform apply
+Outputs:
+bucket_URL = "https://storage.googleapis.com/my-gallery/..
+
+				##### State #####
+Terraform saves the state of resources it manages in a state file. By default the state is stored locally, but it can also be stored remotely in a shared location, which is the preferred method.
+Do NOT modify the state file.
+				######## Module #########
+A terraform module is a set of terraform configuration files in a single directory. 
+This is the primary method for code reuse in Terraform.
+There are 2 kinds of sources:
+ - Local: source within your directory
+ - Remote: source outside your directory
+
+We can use an upstream module from the terraform module registry or create our own.
+
+Terraform Commands
+- terraform init: initialize the provider with plugin. The provider block will have a source attribute that specifies where the plugins will be downloaded from.
+After this command it ran, a .terraform directory will be created where the installed binaries will be.
+
+- terraform plan: preview of resources that will be created after terraform apply. when this is ran, terraform reads the current state of existing remote objects to ensure that terraform state is up to date, compares current configuration to prior state to note any differences, then builds an execution plan that only modifies what is necessary to reach desired state. This provides us the opportunity to preview changes that will be made when we run our state.
+
+- terraform apply: executes plan and creates real infrastructure resources as well as establishes the dependencies.
+Symbols that show wheen this is ran:
++ = create resource
+- = destroy resource
+-/+ = replace (destroy and then create, or vice-versa if create-before-destroy is used)
+~ = update resource in-place
+<= = read
+
+To skip typing in yes, add -auto-approve to your command
+
+- terraform destroy: destroy infrastructure resources. We can also destroy specific resources by specifying a target in the command
+
+- terraform fmt: auto format configuration files to match canonical conventions
+
+- terraform validate: testing syntax
+
+
+Terraform validator: this is different from the 'terraform validate' command. It runs pre-deployment checks against organizations policies to detect policy violations. Useful in CI/CD pipelines. 
+Example use case
+- Platform teams can add guardrails to infrastructure CI/CD pipelines to ensure all changes are validated.
+- Application teams and developers can validate Terraform configuration with organization's central policy library.
+- Security teams can create a centralized policy library to identify and prevent policy violations.
+
+Introduction to Resources
+Resources are infrastructure elements you can configure using Terrafirm eg: Compute Engine instance, VPC, Cloud Storage bucket, Firewall rules
+There are multiple resources and resource types in the real world.
+Terraform uses the underlying APIs of each Google Cloud service to deploy your resources.
+Resources are defined within a .tf file. The resource block represents a single infrastructure object.
+The resource type identifies the type of resource being created, and this resource type depends on the provider being declared within a terraform module. Generally, a provider is a cloud infra platform.
+Attributes can be used to define any advanced features associated with a resource. Not all arguments must be defined.
+We can include multiple resource blocks within same configuration file and these resources can even span against multiple providers.
+
+resource "resource_type" "resource_name" {
+  #Resource arguments
+}
+
+resource "google_compute_network" "vpc_network" {
+  name = "vpc-network" #Required argument
+  project = "<Project_ID>"
+  auto_create_subnetworks = false
+  mtu = 1460
+}
+
+To refer to a resource attribute:
+<resource_type>.<resource_name>.<attribute>
+google_compute_network.vpc_network.name = "vpc-network"
+
+Considerations for definint a resource block:
+- The resource name of a given resource must be unique within the module.
+- The resource type is not user-defined and is based on the provider (must match the term mentioned in Terraform registry)
+- All configuration arguments must be enclosed within the resource block i.e within the curly brackets.
+- All required resource arguments must be defined else, there will be an error of missing argument.
+
+Meta-arguments for resources
+These can be used with any resource tyoe to change the behavior of the resources.
+- count: create multiple instances according to the value assigned to the count
+- for_each: create multiple resources according to a map or a set of strings
+- depends_on: specify explicit dependencies
+- lifecycle: define life cycle of a resource. With this, we can prevent the deletion of a resource for compliance purposes. This is used for high availability
+- provider: select a non-default provider configuration.
+
+count:
+Instead of having multiple resource blocks (redundant code) to create different instances, we can have all those in one block using the count meta-argument
+
+resource "google_compute_instance" "dev_VM1" {
+  name = "Dev_VM1"
+}
+resource "google_compute_instance" "dev_VM2" {
+  name = "Dev_VM2"
+}
+
+turns to:
+
+resource "google_compute_instance" "dev_VM" {
+  count = 2
+  name = "Dev_VM${count.index + 1}"
+  #Other required arguments
+}
+
+for_each:
+Count is used when our instances are almost identical. If some of the arguments cannot be derived from an integer, it is better to use for_each.
+for_each argument can be assigned to a string of values or a map. Terraform will create one instance for each member of the string.
+An example is when we need 3 similar instances but created in 3 different zones, and we want the names to have the zones as prefixes for identification.
+
+resource "google_compute_resource" "dev_VM" {
+  for_each = toser( ["us-central1-a", "asia-east1-b", "europe-west4-a"] )
+  name = "dev-${each.value}"
+
+  zone = each.value
+  #Other required arguments
+}
+
+This will create 3 instances with the names: dev-us-central1-a, dev-asia-east1-b, dev-europe-west4-a.
+
+Resource Dependencies
+While building infrastructure, we could want a visual representation of how our infrastructure is connected. A dependency graph helps us understand our infrastructure before deployment. Terraform builds the dependecy graph for our configurations to generate plans and refresh states. 
+Terraform creates a dependency graph to determine the correct order of operations and will perform operations in parallel when it is safe to do so.
+2 types of dependencies terraform can handle
+- Implicit dependency: dependencies known to Terraform are detected automatically
+- Explicit dependency: dependencies unknown to Terraform must be configured explicitly.
+
+An example of implicit dependency which is handled automatically by Terraform is the fact we cannot create a compute instance until the network is created, or that we cannot assign a static IP to a compute instance until a static IP is reserverd.
+We can use depends_on to declare an ecplicit dependency to Terraform.
+
+When we run 'terraform apply' we can see the order in which things are created.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

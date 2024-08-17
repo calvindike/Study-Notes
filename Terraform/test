@@ -1,0 +1,59 @@
+testing updating file with nvim
+
+practice with vim
+Changes not staged for commit:
+Changes not staged for commit:
+Changes not staged for commit:
+Changes not staged for commit:
+Changes not staged for commit:
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   ../Kubernetes/Anthony_Nocentino_Courses.txt
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   ../Kubernetes/Anthony_Nocentino_Courses.txt
+	deleted:    ../Kubernetes/Pluralsight-practice/Namespace.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/Namespace.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/Namespace.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/Namespace.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/getting-started-k8s
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-deploy.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-service.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/nginx-deployment.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/ps-vols-and-pods
+	modified:   Ned_Bellavance.txt
+	modified:   Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/getting-started-k8s
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-deploy.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-service.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/nginx-deployment.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/ps-vols-and-pods
+	modified:   Ned_Bellavance.txt
+	modified:   Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/getting-started-k8s
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-deploy.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-service.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/nginx-deployment.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/ps-vols-and-pods
+	modified:   Ned_Bellavance.txt
+	modified:   Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+	deleted:    ../Kubernetes/Pluralsight-practice/calico.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/getting-started-k8s
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-deploy.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/hello-service.yml
+	deleted:    ../Kubernetes/Pluralsight-practice/nginx-deployment.yaml
+	deleted:    ../Kubernetes/Pluralsight-practice/ps-vols-and-pods
+	modified:   Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+	modified:   Ned_Bellavance.txt
+	modified:   Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+	modified:  Terraform_Practice/Getting-Started-Terraform (modified content, untracked content) Terraform_Practice/Getting-Started-Terraform (modified content, untracked content)
+---
+
