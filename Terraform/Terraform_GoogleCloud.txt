@@ -220,6 +220,7 @@ Example use case
 - Application teams and developers can validate Terraform configuration with organization's central policy library.
 - Security teams can create a centralized policy library to identify and prevent policy violations.
 
+Writing Infrastructure Code for Google Cloud
 Introduction to Resources
 Resources are infrastructure elements you can configure using Terrafirm eg: Compute Engine instance, VPC, Cloud Storage bucket, Firewall rules
 There are multiple resources and resource types in the real world.
@@ -379,34 +380,186 @@ CFT modules are also referred to as Terraform blueprints.
 
 - You can also use Cloud Foundation Fabric (CFF), a collection of modules and examples for fast prototyping or to be modified and used in organizations.
 
+Organizing and Reusing Configuration with Terraform Modules
+Dont Repeat Yourself Principle - DRY 
+This is a method used in order to not repeat the same set of code multiple times. Terraform uses modules to achieve this.
+We can group sets of resources together so we can reuse them later. When we need to edit this code, we only do it in one place.
+Instead of repeating same code, we use abstraction to avoid redundancy - This practice encourages building efficient code that is readable and reusable.
+In general putrpose programming languages, functions are used to implement the DRY principle. In terraform, we can use modules to achieve this and this module can be reused in multiple places. 
+Module: a group of one or more cnfiguration files (.tf) in a directory.
+- allows us to group a set of resources together and reuse them later.
+- modules can be reference in other modules
+
+To create modules, we'll need to create separate directories, enter the cide in network
+$ mkdir network && cd network
+$ touch main.tf outputs.tf variables.tf
+$ vi main.tf
+resource "google_compute_network" "mynetwork" {
+  name = "mynetwork"
+  auto_create_subnetworks = true
+  routing_mode = global
+  mtu = 1460
+}
+
+resource "google_compute_firewall" "default" {
+  #All necessary parameters
+}
+
+-----> In the example above, notice we have multiple resources grouped in the network module, and in the one below, we have a server module.
+
+$ mkdir server
+$ touch main.tf outputs.tf variables.tf
+$ vi main.tf
+resource "google_compute_instance" "server_VM" {
+  #All necessary parameters defined
+}
+
+When a module is called, the same resources will be used.
+Benefit of Modules
+- redability: eliminates multiple lines of code
+= reusability: code can be reused multiple times easily
+- abstract: separate configs into logical units which reduces theit dependency as well as making it easier to debug.
+- cosistent: helps us package the configuration of a set of resources.
+
+After modules are created, we can call them in our Root main.tf file(note that the main.tf files for network and server are not in our root directory as we created new directories for those).
+example Root main.tf
+provider "google" {
+region = us-central-1 
+}
+
+module "web_server" {
+source = "./server"
+}
+
+module "server_network" {
+source = "./network"
+}
+
+We run the 'terraform init' command to download any modules referenced in our configuration.
+The source meta argument is used to point to the location of the module source code.
+Every module called within terraform requires a source meta argument that points to a location which can be a local or remote path.
+Several remote source types: Terraform Registry, GitHub, Btbucket, HTTP URLs and Cloud storage buckets.
+- Local paths are stored within a directory in the root module path. Local paths do NOT require any installation. 
+- For Terraform Registry, the source address has t be in the format namespace/name/provider
+eg. Terraform Registry 
+module "web_server" {
+  source = "terraform-google-modules/vm/google//modules/compute_instance"
+  version = "0.1.4"
+}
+
+To use this module, we can use
+terraform-google-modules/gcloud/google
+Namespace--------------/Name--/Provider
+
+You are recommended to use version to avoid any unwanted behavior.
+
+Hard coding modules are not the best as we risk running into an Error regarding the resource already existing.
+Error 409: The resource "<resource>" already exists
+
+To parameterize our network module for instance, we replace the hard coded arguments with a variable in the main.tf file, declare the variables in the variables.tf file, then pass the value of the input variable when you call the module:
+$ vi network/main.tf
+resource "google_compute_network" "vpc_network" {
+  name = var.network_name
+}
+
+$ vi network/variables.tf
+variable "network_name" {
+  type = string
+  description = "name of the network"
+}
+
+$ vi main.tf (Root main.tf)
+...
+module "dev_network" {
+  source = "./network"
+  network_name = "my-network1"
+}
+
+module "prod_network" {
+  source = "./network"
+  network_name = "my-network2"
+}
+
+NOTE: You cannot pass values to variables for modules ar run time.
+
+To pass resource arguments from one module to another, the argument must be configured as an output value in terraform.
+For example, if we want to pass the network name to the server module, we declare the output value in the network directory outputs.tf file, declare the argument as a variable in the server module, then refer the output value when calling the server module :
+$ vi network/output.tf
+output "network_name" {
+  value = google_compute_network.my_network.name
+}
+
+$ vi server/main.tf
+resource "google_compute_instance" "server_VM" {
+..
+  network = var.network_name
+}
+
+$ vi server/variables.tf
+variable "network_name" {
+}
+
+$ vi main.tf (Root main.tf)
+module "server_VM1" {
+  source = "./server"
+  network_name = module.my_network_1.network_name
+}
+module "my_network_1" {
+  source = "./network"
+}
+$ terraform init
+
+Best practices for using modules
+- Don't overuse them
+- To loop over values, use terraform for_each or count instead of writing you own code
+- Use local modules to organize and encapsulate your code
+- Use the public terrafor registry to find modules
+- publish or share your modules with your team
 
 
+Terraform States
+Infrastructure changes are tracked using the terraform state. This pretty much describes the state of our infrastructure.
+State files can be stored in remote locations. 
+Terraform state is a metadata repository of our infrastructure configuration. (terraform.tfstate) Terraform state stores the bindings between objects in a remote system and resource instances.
+When terraform creates a remote object from our terraform configuration, it will record the identity of the object or instance, and updates or deletes it in response to our configuration changes.
+When 'terraofrm apply' is ran for the first time, objects are created as well as the state file being automatically created to have a record of all those changes. When we run apply again, it will check the state file to compare that with what we have in our configuraiton.
+By default, terraform svaes the state file locally in the current working directory.
+When working in a team where multoiple developers are working, this should be a remote state file.
 
+Issues with storing Terraform state locally
+- No shared access
+- No locking: if 2 people run changes simultaneously, it could corrupt the state
+- No confidentiality: state file exposes all sensitive data such as username and password of database which could be in plain text.
+Benefits of storing remotely
+- Automatic updates: remote state supports automatic updates to the state file
+- Locking: cloud storage buckets natively support state locking
+- Decure access: Google Cloud Storage buckets support encryption and IAM policies.
 
+To remotely store terraform state in a CLoud storage bucket:
+$ vi main.tf
+resource "google_storage_bucket" "default" {
+  name = "<my_bucket_name>"
+  force_destroy = false
+  location = "US"
+  storage_class = "STANDARD"
+  versioning {
+    enabled = true
+  }
+}
+$ vi backend.tf
+terraform {
+  backend "gcs" {
+    bucket = "<my_bucket_name>"
+    prefix = "terraform/state"
+  }
+}
+}
 
+$ terraform init - copies local state to the remote state and uses remote state going forward.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Use remote states when working in teams: supports locking and versioning
+- Use gitignore for terraform state files
+- Avoid storing secrets in state because terraform stores secret values in plain text.
+- Encrypt state file: use customer-supplied encryption keys to add a layer of protection
+- Do NOT modify terraform state manually instead, use the 'terraform state' command when you need to modify a state.
 
