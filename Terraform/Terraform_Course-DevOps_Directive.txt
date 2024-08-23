@@ -1,0 +1,176 @@
+Complete Terraform Cours - From BEGINNER to PRO - DevOps Directive
+
+Local backend is when you have your terraform state locally in your Root module which is where you run your terraform commands from.
+Remote backend is when you have the state file in a remote location such as aws, gcp, terraform cloud ...
+For AWS, s3 bucket is used for storage while DynamoDB is used for locking. 
+This locking of the state ensures the state file don't get corrupted if multiple people try to write to it at same time when they all run 'terraform apply'.
+
+terraform {
+  backend "s3" {
+    bucket = "devops-directive-tf-state"
+    key = "tf-infra/terraform.tfstaste
+    region = "us-east-1"
+    dynamodb = "terraform-state-locking"
+    encrypt = true
+  }
+}
+
+# ---------------------------------------------------------------------
+To create our remote state, we need to the following:
+######## Remote backend (AWS) Bootstrapping
+#### 1. Define resource with no remote backend ####
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
+#### 2. Define resource wuth versioned and encrypted S3 Bucket ####
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "devops-directive-tf-state"
+  force_destroy = true
+  versioning {
+    enabled = true
+  }
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+}
+
+#### Define dynamo db table with hash key
+resource "aws_dynamodb_table" "terraform_locks" {
+  name = "terraform-state-locking"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key = "LockID"
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
+
+When 'terraform apply' is ran against this, terraform will ask to copy local state to remote state and then, you should be good to use remote state from there.
+# ---------------------------------------------------------------------
+
+#####  Order of evaluation or precedence for supplying variable values/input variables: This is from lowest to highest
+Manual entry during plan/apply
+Default values in variable definitions/declaration block
+TF_VAR_<name> environment variable
+terraform.tfvars or terraform.tfvars.json
+*.auto.tfvars or .auto.tfvars.json
+-var or -var-file <file> flag cmdline
+
+
+Types of variables
+Primitive types:
+- string
+- number
+- boolean
+
+Complex types:
+- list(<TYPE>)
+- set(<TYPE>)
+- map(<TYPE>)
+- object({<AFTER NAME> = <TYPE>, ..})
+- tuple([<TYPE>, ...])
+
+Validation:
+Type checking happens automatically so if you have a variable set to a certain variable type and you pass it a different value eg: passing a string instead of a number, terraform wil call that out with an error
+We can also write our own validation rules
+
+To mark a variable as sensitive, use sensitive = true when defining the variable
+
+We can pass variables to 'terraform apply' using:
+- TF_VAR_variable
+- -var
+There variables can be retrieved from an external secret store like AWS Secrets Manager
+We can reference the secret stores in our terraform config, and use the outputs.tf to pull it into portions of our config
+
+Local variables when used, can only be used within the  scope of that project unlike input variables which can be used far beyond the scope of the project.
+Local variables cannot be passed at run time as well.
+
+We can define our variables in variables.tf or vars.tf, then if not sensitive, we put the variable values in our terraform.tfvars file.
+We can have more than one tfvars file. We just need to pass it to terraform when running our apply command as terraform will only automatically check for terraform.tfvars file.
+$ terraform apply -var-file=another_file.tfvars
+
+For sensitive variables, we can pass them at runtime using -var instead of having the values in our tfvars file. These will also have the sensitive = true attribute when defining the variables in the vars.tf file.
+$ terraform apply -var="db_user=myuser" -var="db_pass=SuperSecretPassword"
+
+Read docs for Expressions and Functions
+Expressions :
+- Template strings
+- Operators (!, -, *, /, %, >, ==, ...)
+- Conditionals (cond ? true : false)
+- For ([for o in var.list : o.id])
+- Splat (var.list[*].id)
+- Dynamic Blocks
+- Constraints (Type & Version)
+
+Functions :
+- Numeric
+- String
+- Collection
+- Encoding
+- Filesystem
+- Date & Time
+- Hash & Crypto
+- IP Network
+- Type Conversion
+
+Meta-Arguments
+- depends_on : used when you need to specify a dependency of a resource on another resource. You use this in the block of the resource that depends on the other resource by putting the other resource as the depended upon resource
+- count: specify whe we need multiple of same configuration created in a resource. eg. using count = 4 to create 4 ec2 instances and name in this case, will be "Server ${count.index} to have "Server 1" "Server 2" "Server 3" "Server 4"
+  This is useful when the resources are identical.
+- for_each: this is like the count argument, but it gives us more control over the resource since it allows us to customize each resource.
+locals {
+  subnet_ids = toset([
+    "subnet-abcdef",
+    "subnet-012345",
+  ]}
+}
+
+resource "aws_instance" "server" {
+  for_each = local.subnet_ids
+  # Other attributes like ami, instance_type, subnet_id...
+
+  tags = {
+    Name = "Server ${each.key}
+  }
+}
+- lifecycle: used to control terraform behavior for specific resources. 
+  create_before_destroy for example, can help with zero downtime deployments where we tell terraform to create the new resource first, before destroying the old one. 
+  ignore_changes prevents terraform from trying to revert metadata being set elsewhere
+  prevent_destroy causes terraform to reject any plan which would destroy this resource
+
+Provisioners allow us to perform actions on a local or remote machine
+- file (could be with a bash script)
+- local-exec
+- remote-exec
+- vendor
+  - chef
+  - puppet
+
+We can use these provisioners with configuration management tools like ansible, chef, puppet. Example will be using the ansible provisioner to deploy some applications after the server is deployed by terraform.
+
+What is a Module?
+Modules are containers for multiple resources that are used together. A module consists of a collection of .tf and or .tf.json files kept together in a directory.
+Modules are the main way to package and reuse resource configurations with Terraform.
+
+
+
+
+
+
+
+
+

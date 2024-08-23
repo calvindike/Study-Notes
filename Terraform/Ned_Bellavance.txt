@@ -226,13 +226,14 @@ project = "globo-web-app"
 $ export TF_VAR_aws_access_key="xxxxxxxxxxxxxxx"
 $ export TF_VAR_aws_secret_key="xxxxxxxxxxxxxxxxxxxxxxxxx"
 
-Order of evaluation or precedence for supplying variable values: This is from lowest to highest
-Default values in variable definitions
-TF_VAR_ environment variable
+#####  Order of evaluation or precedence for supplying variable values/input variables: This is from lowest to highest
+Manual entry during plan/apply
+Default values in variable definitions/declaration block
+TF_VAR_<name> environment variable
 terraform.tfvars or terraform.tfvars.json
-.auto.tfvars or .auto.tfvars.json
--var-file flag
--var flag cmdline
+*.auto.tfvars or .auto.tfvars.json
+-var or -var-file <file> flag cmdline
+
 
 If you want to temporarily overwrite a variable while testing and it is already set in say the .tfvars file, you can pass it to the cmdline to quickly use the new variable value to test.
 If we had env variable as well as *.tfvars file and we run 'terraform apply', terraform will use the variable in *.tfvars file as it is higher than the TF_VAR environment variable.
