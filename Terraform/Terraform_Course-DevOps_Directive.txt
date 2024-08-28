@@ -1,4 +1,4 @@
-Complete Terraform Cours - From BEGINNER to PRO - DevOps Directive
+Complete Terraform Course - From BEGINNER to PRO - DevOps Directive - YouTube
 
 Local backend is when you have your terraform state locally in your Root module which is where you run your terraform commands from.
 Remote backend is when you have the state file in a remote location such as aws, gcp, terraform cloud ...
@@ -165,6 +165,75 @@ We can use these provisioners with configuration management tools like ansible, 
 What is a Module?
 Modules are containers for multiple resources that are used together. A module consists of a collection of .tf and or .tf.json files kept together in a directory.
 Modules are the main way to package and reuse resource configurations with Terraform.
+Types of Modules
+- Root Module: default module containing all .tf files in the main working directory
+- Child Module: a separate external module referred to from a .tf file
+
+Module sources which is a way these modules can come in, include: local paths, terraform registry, GitHub, Bitbucket, Generic Git or Mercurial repositories, HTTP URLs, S3 buckets, GCS buckets
+
+- Local Path
+module "web-app" {
+  source = "../web-app"
+}
+
+- Terraform Registry
+module "consul" {
+  source = "hashicorp/consul/aws"
+  version = "0.1.0"
+}
+
+- GitHub (HTTPS)
+module "example" {
+  source - "github.com/hashicorp/example?ref=v1.2.0"
+}
+
+- GitHub (SSH)
+module "example" {
+  source = "git@github.com:hashicorp/example.git"
+}
+
+- Generic Git Repo
+module "example" {
+  source "git::ssh://username@example.com/storage.git
+}
+
+What makes a good module?
+- Raises the abstraction level from base resource types
+- Groups resources in a logical fashion
+- Exposes input variables to allow necessary customization + composition
+- Provides useful defaults
+- Returns outputs to make firther integrations possible
+
+One Config, Multiple Environments
+When working with Terraform, there are two main approaches when looking to have multiole environments (dev,staging,production)
+1. Workspaces: Multiple named sections within a single backend
+terraform workspace list, show, new, select, delete
+Here, we can switch to a workspace and deploy the configs in that current workspace
+Pros:
+- Easy to get started
+- Convenient terraform.workspace expression
+- Minimizes code duplication
+
+Cons:
+- Prone to human error
+- State stored within same backend
+- Codebase doesn't unambiguously show deployment configurations
+
+2. File Structure: Direcotry layout provides separation, modules provide reuse. Here, we have different directories and subdirectories for these config files instead of having everything in our root module.
+Pros:
+- Isolation of backends 
+  - Improved security
+  - Decreased potential for human error
+- Codebase fully represents deployed state
+
+Cons:
+- Multiple 'terraform apply' required to provision environments
+- More code duplication, but can be minimized with modules
+
+
+
+
+
 
 
 
