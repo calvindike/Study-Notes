@@ -93,6 +93,7 @@ WantedBy=multi-user.target
 # yum -y install net-tools
 # netstat -plant (check ports)
 
+Web UI: http://<public_ip>:9000
 Web UI username: admin
        password: admin
 
