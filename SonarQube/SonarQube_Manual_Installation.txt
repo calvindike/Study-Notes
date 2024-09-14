@@ -42,6 +42,8 @@ postgres=# \l
              |          |          |                 |             |             |            |           | postgres=CTc/postgres
 (4 rows)
 
+postgres=# \q
+
 ------------------- Download and install SonarQube
 
 # cd /opt
