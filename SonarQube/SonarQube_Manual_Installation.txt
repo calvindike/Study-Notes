@@ -47,8 +47,10 @@ postgres=# \q
 ------------------- Download and install SonarQube
 
 # cd /opt
+# yum -y install wget unzip
 # wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.5.90363.zip
 # unzip sonarqube-9.9.5.90363.zip
+# useradd sonarqube
 # mv sonarqube-9.9.5.90363 sonarqube
 # mkdir -p /var/sonarqube/data
 # mkdir -p /var/sonarqube/temp
@@ -60,7 +62,6 @@ sonar.jdbc.password=sonarqube
 sonar.path.data=/var/sonarqube/data
 sonar.path.temp=/var/sonarqube/temp
 
-# useradd sonarqube
 # chown -R sonarqube:sonarqube /opt/sonarqube
 
 ----------------- Setup SonarQube service
