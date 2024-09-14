@@ -1,4 +1,4 @@
-Installation of Java, SonarQube, Necus, and Apache Tomcat. 
+Installation of Java, SonarQube, Nexus, and Apache Tomcat. 
 ####################################################################################################################################################################################################################
 Installed using RedHat Enterprise Linux 9
 
