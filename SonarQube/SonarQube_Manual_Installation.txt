@@ -103,13 +103,17 @@ Web UI username: admin
 Bonus: (On a different t2.medium)
 ------------ Nexus Installation using Java 11
 # cd /opt
-# yum -y install java-11-openjdk
+# yum -y install wget net-tools unzip java-11-openjdk
 # wget https://download.sonatype.com/nexus/3/nexus-3.68.1-02-java11-unix.tar.gz
 # tar -xvf nexus-3.68.1-02-java11-unix.tar.gz
 # mv nexus-3.68.1-02/ nexus
 # useradd nexus
+
 # vi /opt/nexus/bin/nexus.rc
 run_as_user="nexus"
+--- OR ---
+# echo 'run_as_user="nexus"' > /opt/nexus/bin/nexus.rc
+
 # chown -R nexus:nexus /opt/nexus
 # chown -R nexus:nexus /opt/sonatype-work
 # ln -s /opt/nexus/bin/nexus /etc/init.d/nexus
@@ -136,6 +140,7 @@ WantedBy=multi-user.target
 # systemctl enable nexus.service
 # systemctl start nexus.service
 
+Web UI: http://<public_ip>:8081
 ####################################################################################################################################################################################################################
 ####################################################################################################################################################################################################################
 
