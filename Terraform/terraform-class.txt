@@ -1,6 +1,6 @@
 Terraform Workflow
 - init: used to initialize a working directory. This is the first command to be ran after writing a new terraform config as it downloads providers specifie in the configs. When we run this, we download plugins from the terraform registry.
-- validate: validates the terraform config files in the the respcetive directory to ensure the syntax is valid and internally consistent
+- validate: validates the terraform config files in the the respective directory to ensure the syntax is valid and internally consistent
 - plan: creates an execution plan. Terraform performs a refresh to determine what actions are necessary to achieve the desired state in the config files
 - apply: apply changes in config to reach desired state. By defaut, this scans the current directory for config files and applies the changes appropriately
 - destroy: used to destroy terraform managed infrastructure 
